@@ -63,6 +63,7 @@ input,select,textarea{width:100%;background:var(--surface);border:1px solid var(
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .cta{width:100%;margin-top:14px;padding:12px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:600;cursor:pointer}
 .sec{background:var(--chip);color:var(--ink)}
+.tz{font-size:12.5px}.tz td,.tz th{padding-left:4px;padding-right:4px}.zc{cursor:pointer}.zc:active{opacity:.85}.zh{font-size:12px;font-weight:400;color:var(--muted);float:right}
 .link{background:none;border:0;color:var(--accent);cursor:pointer;font-size:13px;padding:4px 6px;font-weight:500}
 .link.d{color:var(--muted)}
 textarea{min-height:120px;font:12px/1.4 ui-monospace,monospace}
@@ -190,12 +191,12 @@ function forecast(){const start=CUR+1;let bal=totals().b;const rows=[];
  return rows}
 /* ---------- graphiques SVG ---------- */
 const COL=i=>"var(--c"+(i%8+1)+")";
-function pie(items){const tot=items.reduce((s,x)=>s+x.v,0);if(tot<=0)return'<div class="muted">Aucune dépense sur cette période.</div>';
+function pie(items,sz){sz=sz||140;const tot=items.reduce((s,x)=>s+x.v,0);if(tot<=0)return'<div class="muted">Aucune dépense sur cette période.</div>';
  let a=-Math.PI/2,p="";const R=80,C=100;
  items.forEach((x,i)=>{const f=x.v/tot,b=a+f*2*Math.PI;
   if(f>=0.9999)p+=`<circle cx="${C}" cy="${C}" r="${R}" fill="${COL(i)}"/>`;
   else{const x1=C+R*Math.cos(a),y1=C+R*Math.sin(a),x2=C+R*Math.cos(b),y2=C+R*Math.sin(b);p+=`<path d="M${C} ${C}L${x1.toFixed(1)} ${y1.toFixed(1)}A${R} ${R} 0 ${f>0.5?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}Z" fill="${COL(i)}" stroke="var(--surface)" stroke-width="1.5"/>`}a=b});
- return`<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center"><svg viewBox="0 0 200 200" width="140" height="140" role="img" aria-label="Répartition des dépenses">${p}</svg><div style="flex:1;min-width:130px">${items.map((x,i)=>`<div class="leg"><i style="background:${COL(i)}"></i><span style="flex:1;min-width:0;overflow-wrap:anywhere">${esc(x.l)}</span><span class="num">${pc(x.v/tot)}</span></div>`).join("")}</div></div>`}
+ return`<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center"><svg viewBox="0 0 200 200" width="${sz}" height="${sz}" role="img" aria-label="Répartition des dépenses">${p}</svg><div style="flex:1;min-width:130px">${items.map((x,i)=>`<div class="leg"><i style="background:${COL(i)}"></i><span style="flex:1;min-width:0;overflow-wrap:anywhere">${esc(x.l)}</span><span class="num">${pc(x.v/tot)}</span></div>`).join("")}</div></div>`}
 function bars(labels,s1,s2,n1,n2){const W=360,H=170,L=34,B=22,T=10,mx=Math.max(1,...s1,...s2),bw=(W-L)/labels.length;
  let g="";[0,0.5,1].forEach(f=>{const y=T+(H-T-B)*(1-f);g+=`<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-4}" y="${y+4}" text-anchor="end">${eur0(mx*f).replace(" €","")}</text>`});
  labels.forEach((l,i)=>{const x=L+i*bw,h1=(H-T-B)*s1[i]/mx,h2=(H-T-B)*s2[i]/mx,w=bw*0.36;
@@ -278,7 +279,27 @@ V.add=()=>{const m=route.ym,sign=route.sign||-1;
 V.list=()=>{const q=route.q.toLowerCase(),ck={};checks().forEach(c=>ck[c.t.id]=c.f);
  let a=sums(route.ym).tx.filter(t=>!q||(t.lbl+" "+t.sub+" "+t.acc).toLowerCase().includes(q)).sort((x,y)=>y.d<x.d?-1:y.d>x.d?1:0);
  return`<input id="q" placeholder="Rechercher" value="${esc(route.q)}" aria-label="Rechercher"><div class="card" style="margin-top:10px">`+(a.map(t=>`<div class="row"><span>${dot(catIdx(t.sub))}${esc(t.lbl||t.sub)}<br><span class="muted">${dfr(t.d)} · ${esc(t.sub)} · ${esc(t.acc)}</span>${ck[t.id]?`<br><span class="tag bad">${esc(ck[t.id])}</span>`:""}</span><span class="num ${t.amt<0?"neg":"pos"}">${eur(t.amt)}<br>${RO()?`<span class="tag ${t.ok?"ok":""}">${t.ok?"Pointé":"Non pointé"}</span>`:`<button class="tag ${t.ok?"ok":""}" data-pt="${t.id}" aria-label="Pointé">${t.ok?"Pointé":"Non pointé"}</button> <button class="link d" data-tdel="${t.id}">Supprimer</button>`}</span></div>`).join("")||'<span class="muted">Aucune opération.</span>')+`</div>`};
-V.ana=()=>{const t=route.anaTab,m=route.ym;
+function zrow(l,v,tot,mx,b,sub){const r=b?v/b:null,c=r==null?"":r>1?"bad":r>S.cfg.thr?"warn":"";return`<div style="padding:6px 0"><div class="row" style="border:0;padding:0"><span style="min-width:0;overflow-wrap:anywhere">${esc(l)}${sub?` <span class="muted">· ${esc(sub)}</span>`:""}</span><span class="num">${eur(v)} <span class="muted">${tot?pc(v/tot):""}</span></span></div><div class="bar"><i class="${c}" style="width:${mx?Math.max(2,v/mx*100):0}%"></i></div>${b?`<div class="muted" style="font-size:12px">Budget ${eur0(b)} · ${pc(r)} utilisé</div>`:""}</div>`}
+const zback=()=>`<button class="link back" data-zoom="">‹ Graphiques</button>`;
+const top8=a=>{let r=a.slice(0,8);if(a.length>9)r=a.slice(0,8).concat({l:"Autres",v:a.slice(8).reduce((s,x)=>s+x.v,0)});else r=a.slice();return r};
+const ZOOM={};
+ZOOM.cat=()=>{const m=route.ym,tx=sums(m).tx;
+ const block=(sens)=>{const neg=sens==="Dépense",by={};tx.filter(x=>neg?x.amt<0:x.amt>0).forEach(x=>{const k=prin(x.sub);(by[k]=by[k]||[]).push(x)});
+  const items=Object.entries(by).map(([k,a])=>({l:k,v:Math.abs(a.reduce((s,x)=>s+x.amt,0)),a})).sort((p,q)=>q.v-p.v);const tot=items.reduce((s,x)=>s+x.v,0),mx=items.length?items[0].v:0;
+  const none=S.cfg.cats.filter(c=>c.sens===sens&&!by[c.n]).length;
+  if(!items.length)return`<div class="card muted">Aucun${neg?"e dépense":" revenu"} sur ce mois.</div>`;
+  return(neg?`<div class="card">${pie(top8(items.map(x=>({l:x.l,v:x.v}))),190)}</div>`:"")+`<div class="card">`+items.map(x=>{const subs={};x.a.forEach(t=>{subs[t.sub]=(subs[t.sub]||0)+Math.abs(t.amt)});const sl=Object.entries(subs).sort((p,q)=>q[1]-p[1]);
+   return`<details><summary>${zrow(x.l,x.v,tot,mx,neg?budOfCat(x.l):0)}</summary><div style="padding-left:12px">${sl.map(([n,v])=>{const so=subOf(n);return zrow(n,v,x.v,sl[0][1],neg&&so?so.b:0)}).join("")}</div></details>`}).join("")+`</div><div class="muted">${items.length} catégorie(s) avec ${neg?"des dépenses":"des revenus"}${none?`, ${none} sans mouvement ce mois-ci`:""}. Touchez une catégorie pour voir ses sous-catégories. Total : ${eur(tot)}.</div>`};
+ return zback()+`<h2>Dépenses par catégorie · ${tag(m)}</h2>`+block("Dépense")+`<h3>Revenus par catégorie</h3>`+block("Revenu")};
+ZOOM.sub=()=>{const m=route.ym,tx=sums(m).tx.filter(x=>x.amt<0),by={};tx.forEach(x=>{by[x.sub]=(by[x.sub]||0)-x.amt});
+ const items=Object.entries(by).map(([l,v])=>({l,v})).sort((p,q)=>q.v-p.v);const tot=items.reduce((s,x)=>s+x.v,0);
+ return zback()+`<h2>Dépenses par sous-catégorie · ${tag(m)}</h2>`+(items.length?`<div class="card">${pie(top8(items),190)}</div><div class="card">`+items.map(x=>{const so=subOf(x.l);return zrow(x.l,x.v,tot,items[0].v,so?so.b:0,so?so.p:"")}).join("")+`</div><div class="muted">${items.length} sous-catégorie(s) avec des dépenses. Total : ${eur(tot)}.</div>`:`<div class="card muted">Aucune dépense sur ce mois.</div>`)};
+ZOOM.rd=()=>{const y=Math.floor(route.ym/12),rv=[],dp=[];let tr=0,td=0,rows="";for(let i=0;i<12;i++){const s=sums(y*12+i);rv.push(s.rev);dp.push(s.dep);tr+=s.rev;td+=s.dep;rows+=`<tr><td>${MC[i]}</td><td>${eur0(s.rev)}</td><td>${eur0(s.dep)}</td><td class="${cls(s.sol)}">${eur0(s.sol)}</td><td>${s.rev?pc(s.sol/s.rev):"–"}</td></tr>`}
+ rows+=`<tr class="t"><td>Total</td><td>${eur0(tr)}</td><td>${eur0(td)}</td><td class="${cls(tr-td)}">${eur0(tr-td)}</td><td>${tr?pc((tr-td)/tr):"–"}</td></tr><tr class="t"><td>Moyenne / mois</td><td>${eur0(tr/12)}</td><td>${eur0(td/12)}</td><td>${eur0((tr-td)/12)}</td><td></td></tr>`;
+ return zback()+`<h2>Revenus et dépenses ${y}</h2><div class="muted" style="margin-bottom:8px">Changez l'année avec les flèches du mois.</div><div class="card">${bars(MC,rv,dp,"Revenus","Dépenses")}</div><div class="card tw"><table class="tz"><tr><th></th><th>Revenus</th><th>Dépenses</th><th>Solde</th><th>Épargne</th></tr>${rows}</table></div>`};
+ZOOM.cum=()=>{const y=Math.floor(route.ym/12),cum=[];let c=0,rows="";for(let i=0;i<12;i++){const s=sums(y*12+i);c+=s.sol;cum.push(c);rows+=`<tr><td>${MC[i]}</td><td class="${cls(s.sol)}">${eur0(s.sol)}</td><td class="${cls(c)}">${eur0(c)}</td></tr>`}
+ return zback()+`<h2>Solde cumulé ${y}</h2><div class="muted" style="margin-bottom:8px">Flux de l'année, sans les soldes initiaux des comptes.</div><div class="card">${line(MC,cum)}</div><div class="card tw"><table class="tz"><tr><th></th><th>Solde du mois</th><th>Cumulé</th></tr>${rows}</table></div>`};
+V.ana=()=>{const t=route.anaTab,m=route.ym;if(route.zoom&&ZOOM[route.zoom])return ZOOM[route.zoom]();
  let h=`<div class="seg">${[["bud","Budget"],["gra","Graphiques"],["an","Année"],["prev","Prévision"]].map(([k,l])=>`<button data-ana="${k}" aria-pressed="${t===k}">${l}</button>`).join("")}</div>`;
  if(t==="bud"){const row=(l,s,b,sens,ci)=>{const r=b?s/b:0,c=sens==="Revenu"?"":r>1?"bad":r>S.cfg.thr?"warn":"";return`<div style="padding:5px 0"><div class="row" style="border:0;padding:0"><span>${ci!=null?dot(ci):""}${esc(l)}</span><span class="num">${eur0(s)} <span class="muted">/ ${eur0(b)}</span></span></div><div class="bar"><i class="${c}" style="width:${Math.min(100,r*100)}%"></i></div></div>`};
   h+=`<div class="card">`+S.cfg.cats.map(c=>{const subs=S.cfg.subs.filter(s=>s.p===c.n);const sp=x=>Math.abs(sums(m).tx.filter(t=>t.sub===x&&(c.sens==="Revenu"?t.amt>0:t.amt<0)).reduce((s,t)=>s+t.amt,0));const tot=subs.reduce((s,x)=>s+sp(x.n),0);
@@ -286,7 +307,7 @@ V.ana=()=>{const t=route.anaTab,m=route.ym;
  if(t==="gra"){const tx=sums(m).tx.filter(x=>x.amt<0);const byC={},byS={};tx.forEach(x=>{byC[prin(x.sub)]=(byC[prin(x.sub)]||0)-x.amt;byS[x.sub]=(byS[x.sub]||0)-x.amt});
   const srt=o=>Object.entries(o).map(([l,v])=>({l,v})).sort((a,b)=>b.v-a.v);let ss=srt(byS);if(ss.length>9){const rest=ss.slice(8).reduce((s,x)=>s+x.v,0);ss=ss.slice(0,8).concat({l:"Autres",v:rest})}
   const y=Math.floor(m/12),rv=[],dp=[],cum=[];let c=0;for(let i=0;i<12;i++){const s=sums(y*12+i);rv.push(s.rev);dp.push(s.dep);c+=s.sol;cum.push(c)}
-  h+=`<h3>Dépenses par catégorie (${tag(m)})</h3><div class="card">${pie(srt(byC))}</div><h3>Dépenses par sous-catégorie</h3><div class="card">${pie(ss)}</div><h3>Revenus et dépenses ${y}</h3><div class="card">${bars(MC,rv,dp,"Revenus","Dépenses")}</div><h3>Solde cumulé ${y} (flux de l'année)</h3><div class="card">${line(MC,cum)}</div>`}
+  h+=`<h3>Dépenses par catégorie (${tag(m)})<span class="zh">Toucher pour détailler</span></h3><div class="card zc" data-zoom="cat" role="button" tabindex="0" aria-label="Détailler les dépenses par catégorie">${pie(srt(byC))}</div><h3>Dépenses par sous-catégorie<span class="zh">Toucher pour détailler</span></h3><div class="card zc" data-zoom="sub" role="button" tabindex="0" aria-label="Détailler les dépenses par sous-catégorie">${pie(ss)}</div><h3>Revenus et dépenses ${y}<span class="zh">Toucher pour détailler</span></h3><div class="card zc" data-zoom="rd" role="button" tabindex="0" aria-label="Détailler les revenus et dépenses">${bars(MC,rv,dp,"Revenus","Dépenses")}</div><h3>Solde cumulé ${y} (flux de l'année)<span class="zh">Toucher pour détailler</span></h3><div class="card zc" data-zoom="cum" role="button" tabindex="0" aria-label="Détailler le solde cumulé">${line(MC,cum)}</div>`}
  if(t==="an"){const y=Math.floor(m/12),ym1=y-1;const tx=allTx();const lim=y<now.getFullYear()?12:y===now.getFullYear()?now.getMonth()+1:0;
   let rows="",TR=0,TD=0,PR=0,PD=0,cR=0,cD=0,cPR=0,cPD=0;
   for(let i=0;i<12;i++){const a=sums(y*12+i,tx),b=sums(ym1*12+i,tx);TR+=a.rev;TD+=a.dep;PR+=b.rev;PD+=b.dep;if(i<lim){cR+=a.rev;cD+=a.dep;cPR+=b.rev;cPD+=b.dep}
@@ -417,7 +438,7 @@ async function applyImport(x){
  route.xl=null;render()}
 /* ---------- événements ---------- */
 document.addEventListener("focusout",()=>setTimeout(()=>{if(render.p&&!(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)))render()},50));
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{route.tab=b.dataset.t;route.sub=null;route.ed=null;render();scrollTo(0,0)});
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{route.zoom=null;route.tab=b.dataset.t;route.sub=null;route.ed=null;render();scrollTo(0,0)});
 $("prev").onclick=()=>{route.ym--;route.year=null;render()};$("next").onclick=()=>{route.ym++;route.year=null;render()};
 function parseStatement(txt,acc){const T=allTx();const out=[];
  txt.split(/\r?\n/).forEach(line=>{line=line.trim();if(!line)return;const sep=line.includes(";")?";":line.includes("\t")?"\t":",";const c=line.split(sep).map(x=>x.trim().replace(/^"|"$/g,""));
@@ -427,10 +448,12 @@ function parseStatement(txt,acc){const T=allTx();const out=[];
   if(!nums.length)return;let amt;if(nums.length>=2){const deb=nums[0].n,cre=nums[1].n;amt=Math.abs(cre)>0&&deb===0?Math.abs(cre):-Math.abs(deb)||Math.abs(cre)}else amt=nums[0].n;
   const label=lbl.join(" ");let sub="";S.cfg.rules.forEach(r=>{if(r.kw&&label.toLowerCase().includes(r.kw.toLowerCase()))sub=r.sub});
   const dup=T.some(t=>t.d===d&&t.acc===acc&&Math.abs(t.amt-amt)<0.005);out.push({d,lbl:label,amt:R2(amt),sub,dup,on:!dup&&!!sub})});return out}
-document.addEventListener("click",e=>{const t=e.target.closest("button,summary");if(!t)return;const D=t.dataset;
- if(D.go!==undefined){const[a,b]=D.go.split(":");route.tab=a;route.sub=b||null;route.ed=null;render();scrollTo(0,0);return}
+document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.dataset&&e.target.dataset.zoom!==undefined&&e.target.getAttribute("role")==="button"){e.preventDefault();e.target.click()}});
+document.addEventListener("click",e=>{const z=e.target.closest("[data-zoom]");if(z){route.zoom=z.dataset.zoom||null;render();scrollTo(0,0);return}
+ const t=e.target.closest("button,summary");if(!t)return;const D=t.dataset;
+ if(D.go!==undefined){const[a,b]=D.go.split(":");route.zoom=null;route.tab=a;route.sub=b||null;route.ed=null;render();scrollTo(0,0);return}
  if(D.pal){setPal(D.pal);render();return}
- if(D.ana){route.anaTab=D.ana;render();return}
+ if(D.ana){route.zoom=null;route.anaTab=D.ana;render();return}
  if(D.sign){route.sign=+D.sign;render();return}
  if(D.ed!==undefined){if(D.ed==="")route.ed=null;else{const[k,i]=D.ed.split(":");route.ed={key:k,i:i==="new"?"new":+i}}render();setTimeout(()=>{const f=$("ef");f&&f.scrollIntoView({block:"center"})},30);return}
  if(D.del){if(t.dataset.sure){const[k,i]=D.del.split(":");const sc=SCH[k];S.cfg[sc.k].splice(+i,1);route.ed=null;saveCfg();toast("Supprimé.")}else{t.textContent="Confirmer la suppression ?";t.dataset.sure=1}return}
