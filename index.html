@@ -379,6 +379,15 @@ MV.cloture=()=>{const y=route.year||Math.floor(route.ym/12),end=y+"-12-31";const
  <h3>Dettes : capital remboursé à reporter</h3><div class="card">${S.cfg.debts.map(d=>`<div class="row"><span>${esc(d.n)}</span><span class="num">${eur(d.paid)} <span class="muted">reste ${eur(debtInfo(d).rem)}</span></span></div>`).join("")||'<span class="muted">Aucune dette.</span>'}</div>
  <h3>Objectifs : déjà épargné à reporter</h3><div class="card">${S.cfg.goals.map(g=>`<div class="row"><span>${esc(g.n)}</span><span class="num">${eur(g.saved)} <span class="muted">reste ${eur(goalInfo(g).reste)}</span></span></div>`).join("")||'<span class="muted">Aucun objectif.</span>'}</div>
  <h3>Marche à suivre</h3><div class="card muted">1. Faites une sauvegarde (Plus > Données > Export).<br>2. Dans Comptes, remplacez le solde initial de chaque compte par son solde au 31/12 et la date par le 31/12.<br>3. Supprimez les transactions de l'année une fois l'export gardé.<br>4. Vérifiez les dettes, objectifs, échéances des récurrents et provisions.</div>`};
+/* ---------- bouton Retour du téléphone ---------- */
+const NAVOK=(()=>{try{return window.top===window.self&&!!history.pushState}catch(e){return false}})();
+const navSnap=()=>({tab:route.tab,sub:route.sub||null,zoom:route.zoom||null,anaTab:route.anaTab,ed:route.ed||null});
+const navDeep=s=>!!(s&&(s.sub||s.zoom||s.ed));
+function navSync(){if(!NAVOK)return;try{const sn=navSnap(),k=JSON.stringify(sn),st=history.state;
+  if(!st||!st.nk){history.replaceState({nk:k,s:sn},"");return}
+  if(st.nk===k)return;
+  if(!navDeep(sn)&&!navDeep(st.s))history.replaceState({nk:k,s:sn},"");else history.pushState({nk:k,s:sn},"")}catch(e){}}
+window.addEventListener("popstate",e=>{if(!NAVOK)return;const st=e.state;if(st&&st.s){Object.assign(route,{tab:st.s.tab,sub:st.s.sub,zoom:st.s.zoom,anaTab:st.s.anaTab,ed:st.s.ed});render();scrollTo(0,0)}});
 function render(){const ae=document.activeElement;if(ae&&ae.closest&&ae.closest("#view")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&route.tab!=="list"){render.p=1;return}
  if(RO()&&route.tab==="add")route.tab="home";if(RO()&&route.tab==="more"&&route.sub==="import")route.sub=null;
  render.p=0;$("ttl").textContent={home:"Mes comptes",add:"Saisie",list:"Opérations",ana:"Analyse",more:"Plus"}[route.tab];
@@ -386,7 +395,7 @@ function render(){const ae=document.activeElement;if(ae&&ae.closest&&ae.closest(
  $("mnav").style.visibility=showM?"visible":"hidden";$("mlab").textContent=tag(route.ym);
  document.querySelectorAll("nav button").forEach(b=>{b.setAttribute("aria-selected",b.dataset.t===route.tab);if(b.dataset.t==="add")b.hidden=RO()});
  const st=$("status");st.textContent=mode==="local"&&window.claude?"Mode local : données enregistrées dans ce navigateur seulement.":mode==="wait"?"Chargement…":(S.cfg.src?"Classeur « "+S.cfg.src.name+" » importé le "+dfy(S.cfg.src.at.slice(0,10))+".":"");
- const y=window.scrollY;$("view").innerHTML=V[route.tab]();window.scrollY!==y&&window.scrollTo(0,y)}
+ const y=window.scrollY;$("view").innerHTML=V[route.tab]();window.scrollY!==y&&window.scrollTo(0,y);navSync()}
 /* ---------- import du classeur (.ods / .xlsx) ---------- */
 function serialISO(v){if(v instanceof Date)return v.getFullYear()+"-"+String(v.getMonth()+1).padStart(2,"0")+"-"+String(v.getDate()).padStart(2,"0");
  if(typeof v==="number"&&v>20000){const d=new Date((Math.floor(v)-25569)*86400000);return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0")}
