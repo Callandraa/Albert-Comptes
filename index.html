@@ -63,7 +63,13 @@ input,select,textarea{width:100%;background:var(--surface);border:1px solid var(
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .cta{width:100%;margin-top:14px;padding:12px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:600;cursor:pointer}
 .sec{background:var(--chip);color:var(--ink)}
-.tz{font-size:12.5px}.tz td,.tz th{padding-left:4px;padding-right:4px}.zc{cursor:pointer}.zc:active{opacity:.85}.zh{font-size:12px;font-weight:400;color:var(--muted);float:right}
+.tz{font-size:12.5px}.tz td,.tz th{padding-left:4px;padding-right:4px}.toast.pop{animation:tpop .22s ease-out}@keyframes tpop{from{transform:translateX(-50%) translateY(10px);opacity:0}to{transform:translateX(-50%);opacity:1}}
+.toast .tu{background:none;border:0;color:inherit;font-weight:700;text-decoration:underline;margin-left:12px;font-size:14px;cursor:pointer;padding:2px 4px}
+.row.flash{animation:flh 1.8s ease-out}@keyframes flh{from{background:color-mix(in srgb,var(--accent) 28%,transparent)}to{background:transparent}}
+.cta:active,.tag:active,.link:active{transform:scale(.97)}
+[data-sw]{cursor:pointer;touch-action:pan-y;transition:transform .12s ease-out}
+.lf{display:grid;grid-template-columns:1fr 1fr;gap:8px}.lf label{margin-top:4px}.lf select,.lf input{width:100%}
+.zc{cursor:pointer}.zc:active{opacity:.85}.zh{font-size:12px;font-weight:400;color:var(--muted);float:right}
 .link{background:none;border:0;color:var(--accent);cursor:pointer;font-size:13px;padding:4px 6px;font-weight:500}
 .link.d{color:var(--muted)}
 textarea{min-height:120px;font:12px/1.4 ui-monospace,monospace}
@@ -119,8 +125,32 @@ function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify({cfg:S.cfg,mon
 let chain=Promise.resolve();
 function queue(fn){chain=chain.then(fn).catch(e=>toast("Enregistrement impossible : "+((e&&e.message)||e)));return chain}
 function saveCfg(){S.empty=false;if(DB)queue(()=>DB.doc("cfg/main").set(clone(S.cfg)));else saveLocal();render()}
+const pend=()=>allTx().filter(t=>t.a&&!t.x);
+const pendTSV=()=>pend().map(t=>[t.d,t.acc,t.sub,String(t.lbl||"").replace(/[\t\r\n]+/g," "),String(t.amt).replace(".",",")].join("\t")).join("\n");
+const pendOK=()=>pend().map(t=>t.ok?"Oui":"Non").join("\n");
+function editTx(t){const accs=[...optAccs()];if(!accs.includes(t.acc))accs.unshift(t.acc);const subs=S.cfg.subs.map(x=>x.n);if(!subs.includes(t.sub))subs.unshift(t.sub);const sg=t.amt<0?"d":"r";
+ return`<button class="link back" data-etx="">${route.eret?"‹ Retour":"‹ Opérations"}</button><form id="ef" class="card" data-id="${t.id}"><b>Modifier l'opération</b>${(()=>{const c=checks().find(x=>x.t.id===t.id);return c?`<div class="msg" style="margin:8px 0"><b>À vérifier :</b> ${esc(c.f)}.<br><button type="button" class="link" data-nc="${t.id}">Tout est correct : ne plus le signaler</button></div>`:""})()}${t.a?"":`<div class="muted" style="margin:6px 0">Cette opération vient du classeur : modifiez-la aussi dans le tableur, sinon elle reviendra comme avant au prochain import.</div>`}
+ <label for="ef_t">Type</label><select id="ef_t"><option value="d"${sg==="d"?" selected":""}>Dépense</option><option value="r"${sg==="r"?" selected":""}>Revenu</option></select>
+ <label for="ef_a">Montant (€)</label><input id="ef_a" inputmode="decimal" value="${esc(String(Math.abs(t.amt)).replace(".",","))}" autocomplete="off" required>
+ <label for="ef_s">Sous-catégorie</label><select id="ef_s">${subs.map(n=>`<option${n===t.sub?" selected":""}>${esc(n)}</option>`).join("")}</select>
+ <label for="ef_l">Libellé</label><input id="ef_l" value="${esc(t.lbl||"")}" autocomplete="off">
+ <label for="ef_c">Compte</label><select id="ef_c">${accs.map(a=>`<option${a===t.acc?" selected":""}>${esc(a)}</option>`).join("")}</select>
+ <label for="ef_d">Date</label><input id="ef_d" type="date" value="${t.d}" required>
+ <label style="display:flex;gap:10px;align-items:center;margin-top:12px;color:var(--ink)"><input type="checkbox" id="ef_o"${t.ok?" checked":""} style="width:auto"> Pointée</label>
+ <button class="cta" type="submit">Enregistrer</button><button type="button" class="link d" data-tdel="${t.id}" style="margin-top:8px">Supprimer l'opération</button></form>`}
+function etxClose(){route.etx=null;if(route.eret){route.tab=route.eret.tab;route.sub=route.eret.sub;route.eret=null}}
+function txKey(id){return Object.keys(S.months).find(k=>S.months[k].some(x=>x.id===id))}
+function delTx(id){const k=txKey(id);if(!k)return;const old=clone(S.months[k]);S.months[k]=S.months[k].filter(x=>x.id!==id);saveMonth(k);vib();toast("Opération supprimée.",()=>{S.months[k]=old;saveMonth(k)})}
+function togglePt(id){const k=txKey(id);if(!k)return;const x=S.months[k].find(z=>z.id===id);x.ok=!x.ok;saveMonth(k);vib();toast(x.ok?"Opération pointée.":"Pointage retiré.",()=>{const y=(S.months[k]||[]).find(z=>z.id===id);if(y){y.ok=!y.ok;saveMonth(k)}})}
+const undoAdd=(k,id)=>()=>{S.months[k]=(S.months[k]||[]).filter(x=>x.id!==id);saveMonth(k)};
+function upcoming(){const td=+TODAY.slice(8,10),out=[];S.cfg.recs.forEach((r,i)=>{if(!occurs(r,CUR)||r.active==="Non")return;const dom=Math.min(+r.next.slice(8,10)||1,28),dd=dom-td;if(dd>=0&&dd<=7&&recStatus(r,CUR)!=="Saisi")out.push({r,i,dd})});return out.sort((a,b)=>a.dd-b.dd)}
 function saveMonth(k){S.empty=false;if(DB)queue(()=>DB.doc("tx/"+k).set({items:clone(S.months[k]||[])}));else saveLocal();render()}
-function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
+function toast(t,undo){const e=$("toast");e.textContent="";const sp=document.createElement("span");sp.textContent=t;e.appendChild(sp);toast.u=undo||null;
+ if(undo){const b=document.createElement("button");b.className="tu";b.dataset.undo="1";b.textContent="Annuler";e.appendChild(b)}
+ e.hidden=false;e.classList.remove("pop");void e.offsetWidth;e.classList.add("pop");clearTimeout(toast.t);toast.t=setTimeout(()=>{e.hidden=true;toast.u=null},undo?6000:2600)}
+const vib=()=>{try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}};
+function lastGet(){try{return JSON.parse(localStorage.getItem("mc-last")||"{}")}catch(e){return{}}}
+function lastSet(acc,sign,sub){try{const l=lastGet();l.acc=acc;(l.s=l.s||{})[sign]=sub;localStorage.setItem("mc-last",JSON.stringify(l))}catch(e){}}
 /* ---------- utilitaires ---------- */
 const MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const MC=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
@@ -162,7 +192,7 @@ function recStatus(r,m){const T=allTx();const here=T.some(t=>inM(t,m)&&matches(t
 function lastAmt(r){const T=allTx().filter(t=>matches(t,r));return T.length?T[T.length-1].amt:null}
 function checks(){const T=allTx(),out=[];const keyc={};
  T.forEach(t=>{const k=[t.d,t.acc,t.lbl,t.amt].join("|");keyc[k]=(keyc[k]||0)+1});
- T.forEach(t=>{const f=[];
+ T.forEach(t=>{const f=[];if(t.nc)return;
   if(keyc[[t.d,t.acc,t.lbl,t.amt].join("|")]>1)f.push("Doublon possible");
   if(t.amt<0){const same=T.filter(x=>x.sub===t.sub&&x.amt<0);if(same.length>=4){const avg=same.reduce((s,x)=>s-x.amt,0)/same.length;if(-t.amt>30&&-t.amt>3*avg)f.push("Montant inhabituel pour cette sous-catégorie")}}
   if(!subOf(t.sub))f.push("Sous-catégorie inconnue");
@@ -258,27 +288,39 @@ V.home=()=>{const m=route.ym,s=sums(m),p=sums(m-1),tt=totals(),vb=varBudget(m),c
  const rc=recoRows().filter(r=>r.ecart!=null&&Math.abs(r.ecart)>=0.005).length;
  let h=S.empty?`<div class="msg">Aucune donnée pour l'instant. Importez votre classeur dans Plus > Données.</div>`:"";
  if(!S.empty&&mode!=="db"){const bd=bakDays(),sz=bakGet(BKS);if((bd==null||bd>=30)&&(!sz||Date.now()-new Date(sz)>7*864e5))h+=`<div class="card"><b>Pensez à sauvegarder</b><div class="muted" style="margin:6px 0">${bd==null?"Vous n'avez encore fait aucune sauvegarde.":"Dernière sauvegarde il y a "+bd+" jours."} Vos données ne sont que sur ce téléphone.</div><button class="cta" data-bak="1">Sauvegarder maintenant</button><button class="cta sec" data-bakno="1">Plus tard</button></div>`}
+ const al=[];if(ck)al.push(ck===1&&!RO()?`<button class="link" data-open="${checks()[0].t.id}">1 opération à vérifier</button>`:`<button class="link" data-go="more:controles">${ck} opération(s) à vérifier</button>`);if(absent)al.push(`<button class="link" data-go="${RO()?"more:controles":"add:"}">${absent} prélèvement(s) non saisi(s)</button>`);if(price)al.push(`<button class="link" data-go="more:controles">${price} montant(s) récurrent(s) différent(s)</button>`);if(rc)al.push(`<button class="link" data-go="more:rappro">Rapprochement : écart à vérifier</button>`);
+ upcoming().forEach(({r,i,dd})=>{const w=dd===0?"aujourd'hui":dd===1?"demain":"dans "+dd+" j",txt=esc(r.n)+" · "+w+" · "+eur(r.amt).replace("−","");al.push(RO()?`<span>${txt}</span>`:`<button class="link" data-rec="${i}" data-cur="1">Saisir : ${txt}</button>`)});
+ const over=S.cfg.cats.filter(c=>c.sens==="Dépense").filter(c=>{const b=budOfCat(c.n);return b>0&&spentIn(m,t=>prin(t.sub)===c.n)/b>S.cfg.thr}).length;if(over)al.push(`<button class="link" data-go="ana:">${over} catégorie(s) au-dessus de ${pc(S.cfg.thr)} du budget</button>`);
+ {const pq=pend().length;if(pq)al.push(`<button class="link" data-go="more:data">${pq} opération(s) à reporter dans le tableur</button>`)}
+ if(!S.empty&&!RO())h+=`<button class="cta" data-go="add:" style="margin-bottom:10px">+ Ajouter une opération</button>`;
+ if(al.length)h+=`<h2>À faire et à surveiller</h2><div class="card">${al.map(a=>`<div>${a}</div>`).join("")}</div>`;
  h+=`<div class="card hero"><div class="muted">Patrimoine net (comptes − dettes)</div><div class="big">${eur(tt.net)}</div><div class="muted">Comptes ${eur(tt.b)} · dettes ${eur(tt.d)}</div></div>
  <div class="grid2"><div class="card rev"><div class="muted">Revenus</div><div class="num" style="font-weight:600;font-size:18px">${eur(s.rev)}</div></div><div class="card dep"><div class="muted">Dépenses</div><div class="num" style="font-weight:600;font-size:18px">${eur(s.dep)}</div></div></div>
  <div class="card"><div class="row"><span>Solde du mois</span><span class="num ${cls(s.sol)}"><b>${eur(s.sol)}</b></span></div><div class="row"><span>Taux d'épargne</span><span class="num">${s.rev?pc(s.sol/s.rev):"–"}</span></div><div class="row"><span>Dépenses du mois précédent</span><span class="num">${eur(p.dep)}</span></div></div>`;
- const al=[];if(ck)al.push(`<button class="link" data-go="more:controles">${ck} opération(s) à vérifier</button>`);if(absent)al.push(`<button class="link" data-go="${RO()?"more:controles":"add:"}">${absent} prélèvement(s) non saisi(s)</button>`);if(price)al.push(`<button class="link" data-go="more:controles">${price} montant(s) récurrent(s) différent(s)</button>`);if(rc)al.push(`<button class="link" data-go="more:rappro">Rapprochement : écart à vérifier</button>`);
- if(al.length)h+=`<h2>À surveiller</h2><div class="card">${al.map(a=>`<div>${a}</div>`).join("")}</div>`;
  h+=`<h2>Budget du jour</h2><div class="card"><div class="msg">${esc(vb.msg)}</div><div class="row"><span>Budget variable</span><span class="num">${eur(vb.bv)}</span></div><div class="row"><span>Dépensé</span><span class="num">${eur(vb.sv)}</span></div><div class="row"><span>Par jour restant (${vb.left} j)</span><span class="num"><b>${eur(vb.per)}</b></span></div></div>`;
  h+=`<h2>Comptes</h2><div class="card">${balances().map(b=>{const a=S.cfg.accounts.find(x=>x.n===b.n)||{};return`<div class="row"><span>${dot(ACOL[a.t]!=null?ACOL[a.t]:6)}${esc(b.n)}</span><span class="num ${b.bal<0?"neg":""}">${eur(b.bal)}</span></div>`}).join("")||'<span class="muted">Aucun compte.</span>'}</div>`;
  h+=`<button class="link" data-go="more:bilan">Lire le bilan du mois ›</button>`;return h};
-V.add=()=>{const m=route.ym,sign=route.sign||-1;
+V.add=()=>{const m=route.ym,sign=route.sign||-1,L=lastGet(),ls=(L.s&&L.s[sign])||"";
+ const lm=new Map();allTx().forEach(t=>{if(!t.lbl)return;const o=lm.get(t.lbl);if(!o||t.d>=o.d)lm.set(t.lbl,{d:t.d,sub:t.sub,acc:t.acc,n:(o?o.n:0)+1});else o.n++});
+ const labs=[...lm.entries()].sort((a,b)=>b[1].n-a[1].n||(b[1].d<a[1].d?-1:1)).slice(0,150);route.lm=Object.fromEntries(labs);
  let h=`<form id="f" class="card"><b>Nouvelle opération</b><div class="seg" style="margin-top:8px"><button type="button" data-sign="-1" aria-pressed="${sign<0}">Dépense</button><button type="button" data-sign="1" aria-pressed="${sign>0}">Revenu</button></div>
  <label for="fa">Montant (€)</label><input id="fa" inputmode="decimal" placeholder="12,50" autocomplete="off" required>
- <label for="fs">Sous-catégorie</label><select id="fs">${S.cfg.subs.filter(s=>(catOf(s.p)||{sens:"Dépense"}).sens===(sign<0?"Dépense":"Revenu")).map(s=>`<option>${esc(s.n)}</option>`).join("")}</select>
- <label for="fl">Libellé</label><input id="fl" placeholder="Supérette, Netflix…" autocomplete="off">
- <label for="fc">Compte</label><select id="fc">${optAccs().map(a=>`<option>${esc(a)}</option>`).join("")}</select>
+ <label for="fs">Sous-catégorie</label><select id="fs">${S.cfg.subs.filter(s=>(catOf(s.p)||{sens:"Dépense"}).sens===(sign<0?"Dépense":"Revenu")).map(s=>`<option${s.n===ls?" selected":""}>${esc(s.n)}</option>`).join("")}</select>
+ <label for="fl">Libellé</label><input id="fl" list="dl" placeholder="Supérette, Netflix…" autocomplete="off"><datalist id="dl">${labs.map(([l])=>`<option value="${esc(l)}"></option>`).join("")}</datalist>
+ <label for="fc">Compte</label><select id="fc">${optAccs().map(a=>`<option${a===L.acc?" selected":""}>${esc(a)}</option>`).join("")}</select>
  <label for="fd">Date</label><input id="fd" type="date" value="${TODAY}" required><button class="cta" type="submit">Enregistrer</button></form>`;
  const exp=S.cfg.recs.filter(r=>occurs(r,m));
  h+=`<h2>Ce mois-ci : récurrents attendus (${tag(m)})</h2><div class="card">`+(exp.length?exp.map((r,i)=>{const st=recStatus(r,m);return`<div class="row"><span>${esc(r.n)}<br><span class="muted">${r.sens==="Revenu"?"+":"−"}${eur(r.amt).replace("−","")} · ${esc(r.sub)}</span></span><span class="num">${st==="Saisi"?'<span class="tag ok">Saisi</span>':`<span class="tag ${st==="Absent"?"bad":""}">${st}</span><br><button class="link" data-rec="${S.cfg.recs.indexOf(r)}">Saisir</button>`}</span></div>`}).join(""):'<span class="muted">Aucun récurrent attendu.</span>')+`</div>`;
  h+=`<button class="link" data-go="more:import">Importer un relevé bancaire ›</button>`;return h};
-V.list=()=>{const q=route.q.toLowerCase(),ck={};checks().forEach(c=>ck[c.t.id]=c.f);
- let a=sums(route.ym).tx.filter(t=>!q||(t.lbl+" "+t.sub+" "+t.acc).toLowerCase().includes(q)).sort((x,y)=>y.d<x.d?-1:y.d>x.d?1:0);
- return`<input id="q" placeholder="Rechercher" value="${esc(route.q)}" aria-label="Rechercher"><div class="card" style="margin-top:10px">`+(a.map(t=>`<div class="row"><span>${dot(catIdx(t.sub))}${esc(t.lbl||t.sub)}<br><span class="muted">${dfr(t.d)} · ${esc(t.sub)} · ${esc(t.acc)}</span>${ck[t.id]?`<br><span class="tag bad">${esc(ck[t.id])}</span>`:""}</span><span class="num ${t.amt<0?"neg":"pos"}">${eur(t.amt)}<br>${RO()?`<span class="tag ${t.ok?"ok":""}">${t.ok?"Pointé":"Non pointé"}</span>`:`<button class="tag ${t.ok?"ok":""}" data-pt="${t.id}" aria-label="Pointé">${t.ok?"Pointé":"Non pointé"}</button> <button class="link d" data-tdel="${t.id}">Supprimer</button>`}</span></div>`).join("")||'<span class="muted">Aucune opération.</span>')+`</div>`};
+V.list=()=>{if(route.etx){const k=txKey(route.etx),t=k&&S.months[k].find(z=>z.id===route.etx);if(t)return editTx(t);route.etx=null}
+ const q=route.q.toLowerCase(),F=route.f||{},ck={};checks().forEach(c=>ck[c.t.id]=c.f);
+ const y=Math.floor(route.ym/12),base=F.per==="all"?allTx():F.per==="year"?allTx().filter(t=>Math.floor(mOf(t.d)/12)===y):sums(route.ym).tx,mn=num(F.min||"");
+ const a=base.filter(t=>(!q||(t.lbl+" "+t.sub+" "+t.acc).toLowerCase().includes(q))&&(!F.acc||t.acc===F.acc)&&(!F.cat||prin(t.sub)===F.cat)&&(!F.sens||(F.sens==="d"?t.amt<0:t.amt>0))&&(!F.ok||(F.ok==="n"?!t.ok:t.ok))&&(isNaN(mn)||!mn||Math.abs(t.amt)>=mn)).sort((x,z)=>z.d<x.d?-1:z.d>x.d?1:0);
+ const rev=a.filter(t=>t.amt>0).reduce((s,t)=>s+t.amt,0),dep=-a.filter(t=>t.amt<0).reduce((s,t)=>s+t.amt,0),nf=["acc","cat","sens","ok","min"].filter(k=>F[k]).length+(F.per&&F.per!=="m"?1:0);
+ const sel=(id,lab,opts,v)=>`<div><label for="lf_${id}">${lab}</label><select id="lf_${id}">${opts.map(([k,l])=>`<option value="${esc(k)}"${k===(v||"")?" selected":""}>${esc(l)}</option>`).join("")}</select></div>`;
+ const flt=`<details id="lfd" class="card" style="margin-top:10px"${route.fo||nf?" open":""}><summary><b>Filtres</b>${nf?` <span class="tag">${nf} actif${nf>1?"s":""}</span>`:""}</summary><div class="lf">${sel("per","Période",[["m","Ce mois ("+tag(route.ym)+")"],["year","Toute l'année "+y],["all","Tout l'historique"]],F.per||"m")}${sel("acc","Compte",[["","Tous"]].concat(S.cfg.accounts.map(x=>[x.n,x.n])),F.acc)}${sel("cat","Catégorie",[["","Toutes"]].concat(S.cfg.cats.map(x=>[x.n,x.n])),F.cat)}${sel("sens","Type",[["","Tous"],["d","Dépenses"],["r","Revenus"]],F.sens)}${sel("ok","Statut",[["","Tous"],["n","Non pointées"],["p","Pointées"]],F.ok)}<div><label for="lf_min">Montant minimum (€)</label><input id="lf_min" inputmode="decimal" placeholder="0" value="${esc(F.min||"")}"></div></div>${nf?`<button class="link" data-lfreset="1">Réinitialiser les filtres</button>`:""}</details>`;
+ const lim=a.slice(0,300);
+ return`<input id="q" placeholder="Rechercher" value="${esc(route.q)}" aria-label="Rechercher">${flt}<div class="muted" style="margin:8px 2px">${a.length} opération(s) · Revenus ${eur(rev)} · Dépenses ${eur(dep)} · Solde ${eur(rev-dep)}</div><div class="card">`+(lim.map(t=>`<div class="row${t.id===route.flash?" flash":""}"${RO()?"":` data-sw="${t.id}"`}><span>${dot(catIdx(t.sub))}${esc(t.lbl||t.sub)}<br><span class="muted">${dfr(t.d)} · ${esc(t.sub)} · ${esc(t.acc)}</span>${ck[t.id]?`<br><span class="tag bad">${esc(ck[t.id])}</span>`:""}</span><span class="num ${t.amt<0?"neg":"pos"}">${eur(t.amt)}<br>${RO()?`<span class="tag ${t.ok?"ok":""}">${t.ok?"Pointé":"Non pointé"}</span>`:`<button class="tag ${t.ok?"ok":""}" data-pt="${t.id}" aria-label="Pointé">${t.ok?"Pointé":"Non pointé"}</button> <button class="link d" data-tdel="${t.id}">Supprimer</button>`}</span></div>`).join("")||'<span class="muted">Aucune opération.</span>')+`</div>`+(a.length>lim.length?`<div class="muted">${lim.length} premières opérations sur ${a.length} : affinez avec les filtres.</div>`:"")+(!RO()&&lim.length?`<div class="muted" style="font-size:12px;margin-top:6px">Astuce : touchez une ligne pour la modifier ; glissez-la vers la droite pour la pointer, vers la gauche pour la supprimer (un bouton Annuler apparaît).</div>`:"")};
 function zrow(l,v,tot,mx,b,sub){const r=b?v/b:null,c=r==null?"":r>1?"bad":r>S.cfg.thr?"warn":"";return`<div style="padding:6px 0"><div class="row" style="border:0;padding:0"><span style="min-width:0;overflow-wrap:anywhere">${esc(l)}${sub?` <span class="muted">· ${esc(sub)}</span>`:""}</span><span class="num">${eur(v)} <span class="muted">${tot?pc(v/tot):""}</span></span></div><div class="bar"><i class="${c}" style="width:${mx?Math.max(2,v/mx*100):0}%"></i></div>${b?`<div class="muted" style="font-size:12px">Budget ${eur0(b)} · ${pc(r)} utilisé</div>`:""}</div>`}
 const zback=()=>`<button class="link back" data-zoom="">‹ Graphiques</button>`;
 const top8=a=>{let r=a.slice(0,8);if(a.length>9)r=a.slice(0,8).concat({l:"Autres",v:a.slice(8).reduce((s,x)=>s+x.v,0)});else r=a.slice();return r};
@@ -342,7 +384,7 @@ MV.controles=()=>{const c=checks(),m=route.ym;
  const ab=S.cfg.recs.filter(r=>r.freq==="Mensuel"&&r.active!=="Non"&&recStatus(r,m)==="Absent");
  const pr=S.cfg.recs.map(r=>({r,l:lastAmt(r)})).filter(x=>x.l!=null&&Math.abs(Math.abs(x.l)-x.r.amt)>=0.01);
  const chg=S.cfg.recs.filter(r=>r.active!=="Non");const ch=chg.filter(r=>r.sens==="Dépense").reduce((s,r)=>s+r.amt*12/PER[r.freq],0)/12,rv=chg.filter(r=>r.sens==="Revenu").reduce((s,r)=>s+r.amt*12/PER[r.freq],0)/12,mr=sums(m).rev;
- return`<h2>Opérations à vérifier (${c.length})</h2><div class="card">`+(c.length?c.slice(0,30).map(x=>`<div class="row"><span>${esc(x.t.lbl||x.t.sub)}<br><span class="muted">${dfy(x.t.d)} · ${esc(x.t.sub)}</span><br><span class="tag bad">${esc(x.f)}</span></span><span class="num">${eur(x.t.amt)}</span></div>`).join(""):'<span class="muted">Aucune anomalie détectée.</span>')+`</div><div class="muted">Un signalement n'est pas forcément une erreur : doublon = même date, compte, libellé et montant ; montant inhabituel = plus de 3 fois la moyenne de la sous-catégorie.</div>
+ return`<h2>Opérations à vérifier (${c.length})</h2><div class="card">`+(c.length?c.slice(0,30).map(x=>`<div class="row"${RO()?"":` data-open="${x.t.id}" style="cursor:pointer"`}><span>${esc(x.t.lbl||x.t.sub)}<br><span class="muted">${dfy(x.t.d)} · ${esc(x.t.sub)}</span><br><span class="tag bad">${esc(x.f)}</span></span><span class="num">${eur(x.t.amt)}${RO()?"":`<br><span class="muted">Vérifier ›</span>`}</span></div>`).join(""):'<span class="muted">Aucune anomalie détectée.</span>')+`</div><div class="muted">Touchez une opération pour l'ouvrir, la corriger ou retirer le signalement. Un signalement n'est pas forcément une erreur : doublon = même date, compte, libellé et montant ; montant inhabituel = plus de 3 fois la moyenne de la sous-catégorie.</div>
  <h2>Abonnements et récurrents</h2><div class="card"><div class="row"><span>Charges récurrentes / mois</span><span class="num">${eur(ch)}</span></div><div class="row"><span>Revenus récurrents / mois</span><span class="num">${eur(rv)}</span></div><div class="row"><span>Charges / revenus du mois étudié</span><span class="num">${mr?pc(ch/mr):"–"}</span></div></div>
  <h3>Prélèvements attendus mais absents (${tag(m)})</h3><div class="card">${ab.map(r=>`<div class="row"><span>${esc(r.n)}</span><span class="num">${eur(r.amt)} <span class="muted">· ${dfr(dOf(m,Math.min(+r.next.slice(8,10)||1,28)))}</span></span></div>`).join("")||'<span class="muted">Rien d\'absent.</span>'}</div>
  <h3>Montants modifiés</h3><div class="card">${pr.map(x=>`<div class="row"><span>${esc(x.r.n)}</span><span class="num">prévu ${eur(x.r.amt)}<br>constaté ${eur(Math.abs(x.l))} <span class="tag ${Math.abs(x.l)>x.r.amt?"bad":"ok"}">${Math.abs(x.l)>x.r.amt?"hausse":"baisse"}</span></span></div>`).join("")||'<span class="muted">Aucun changement de prix.</span>'}</div><div class="muted">Le repérage se fait sur le libellé : le nom du récurrent doit figurer dans le libellé de la transaction.</div>`};
@@ -361,9 +403,10 @@ MV.data=()=>{const dump=JSON.stringify({cfg:S.cfg,months:S.months});const xl=rou
  <details><summary><b>Capacités de l'import</b> <span class="muted">(utilisé / maximum)</span></summary><div style="padding:6px 0">${[["Comptes",S.cfg.accounts.length,20],["Catégories principales",S.cfg.cats.length,25],["Sous-catégories",S.cfg.subs.length,120],["Dettes",S.cfg.debts.length,12],["Objectifs",S.cfg.goals.length,10],["Récurrents",S.cfg.recs.length,40],["Provisions",S.cfg.provs.length,20],["Règles d'import",S.cfg.rules.length,100],["Opérations (lignes de Transactions)",Object.values(S.months).reduce((a,m)=>a+m.length,0),4996]].map(([n,u,m])=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0"><span>${n}</span><span class="${u>=m?"neg":(u>=m*0.9?"warn":"muted")}">${u} / ${m}</span></div>`).join("")}</div></details>
  <details><summary><b>Ce qui demande une intervention</b></summary><div class="muted" style="padding:6px 0">Dépasser une des capacités ci-dessus, renommer un onglet, déplacer des colonnes, ou ajouter un onglet à afficher dans l'application. L'import ignore alors ce qu'il ne trouve pas, sans message d'erreur.</div></details>
  <details><summary><b>Bon réflexe</b></summary><div class="muted" style="padding:6px 0">Avant de confirmer un import, lisez l'aperçu : les nombres d'opérations, de comptes, de sous-catégories, de récurrents, etc. doivent correspondre à votre classeur. L'encadré « À vérifier » signale les lignes ignorées (capacité dépassée, onglet renommé, opération sans date ou sans sous-catégorie connue). Faites aussi une sauvegarde avant tout remplacement.</div></details></div>
- <div class="card"><label style="display:flex;gap:10px;align-items:flex-start;margin:0;color:var(--ink)"><input type="checkbox" id="rotog" style="width:auto;margin-top:3px" ${RO()?"checked":""}><span><b>Mode vitrine (lecture seule)</b><br><span class="muted">Le classeur est la source des données : l'application affiche sans modifier. Décochez pour saisir des opérations dans l'application ; elles seront remplacées au prochain import du classeur.</span></span></label></div>`;
+ <div class="card"><label style="display:flex;gap:10px;align-items:flex-start;margin:0;color:var(--ink)"><input type="checkbox" id="rotog" style="width:auto;margin-top:3px" ${RO()?"checked":""}><span><b>Mode vitrine (lecture seule)</b><br><span class="muted">Le classeur est la source des données : l'application affiche sans modifier. Décochez pour saisir des opérations dans l'application ; reportez-les ensuite dans le tableur (carte « Opérations à reporter »), sinon elles seront remplacées au prochain import du classeur.</span></span></label></div>`;
+const pn=pend().length;const pdUI=(RO()&&!pn)?"":`<div class="card"><b>Opérations à reporter dans le tableur</b><div class="muted" style="margin:6px 0">${pn?pn+" opération(s) saisie(s) dans l'application ne sont pas dans votre classeur. Copiez-les, collez-les dans l'onglet Transactions (colonnes A à E, première ligne vide), puis collez la colonne Pointé (G), et enfin marquez-les comme reportées. Sinon un nouvel import les effacerait.":"Aucune opération saisie dans l'application en attente."}</div>${pn?`<textarea id="pt" readonly rows="4" style="width:100%;font-size:12px" aria-label="Opérations à reporter">${esc(pendTSV())}</textarea><button class="cta" data-pcopy="1">Copier pour Transactions (A à E)</button><button class="cta sec" data-pcopyok="1">Copier la colonne Pointé (G)</button><button class="cta sec" data-pmark="1">Marquer comme reportées</button>`:""}</div>`;
 const bd=bakDays(),bk=route.bk;const bkUI=mode==="db"?"":`<div class="card"><b>Sauvegarde</b><div class="muted" style="margin:6px 0">${bd==null?"Aucune sauvegarde enregistrée.":"Dernière sauvegarde : "+(bd===0?"aujourd'hui":"il y a "+bd+" jour"+(bd>1?"s":""))+"."} Vos données ne sont que sur ce téléphone : une sauvegarde les protège si vous videz les données de Chrome ou changez de téléphone.</div><button class="cta" data-bak="1">Enregistrer une sauvegarde</button>${typeof File==="function"&&navigator.canShare&&navigator.canShare({files:[new File(["x"],"a.json",{type:"application/json"})]})?`<button class="cta sec" data-bakshare="1">Envoyer vers Drive ou ailleurs</button>`:""}<label for="bf" style="margin-top:12px">Restaurer depuis une sauvegarde</label><input id="bf" type="file" accept=".json,application/json" aria-label="Fichier de sauvegarde">${bk?(bk.err?`<div class="msg neg" style="margin-top:10px">${esc(bk.err)}</div>`:`<div class="msg" style="margin-top:10px">${esc(bk.name)} : ${bk.n} opérations, ${bk.d.cfg.accounts.length} comptes, ${bk.d.cfg.subs.length} sous-catégories${bk.at?", sauvegardée le "+dfy(bk.at.slice(0,10)):""}.</div><button class="cta" data-applybk="1">Restaurer cette sauvegarde</button>`):""}</div>`;
-return xlUI+bkUI+`<div class="card"><div class="muted" style="margin-bottom:8px">${mode==="db"?"Vos données sont synchronisées entre vos appareils : la même page, ouverte avec votre compte, affiche les mêmes données.":"Les données sont enregistrées sur cet appareil. Pour les retrouver ailleurs, réimportez votre classeur ou utilisez l'export ci-dessous."}</div>
+return xlUI+pdUI+bkUI+`<div class="card"><div class="muted" style="margin-bottom:8px">${mode==="db"?"Vos données sont synchronisées entre vos appareils : la même page, ouverte avec votre compte, affiche les mêmes données.":"Les données sont enregistrées sur cet appareil. Pour les retrouver ailleurs, réimportez votre classeur ou utilisez l'export ci-dessous."}</div>
  <label for="exp">Export (copier)</label><textarea id="exp" readonly>${esc(dump)}</textarea><button class="cta" data-copy="1">Copier l'export</button>
  <label for="imp">Importer (coller un export)</label><textarea id="imp" placeholder="Collez ici l'export complet"></textarea><button class="cta sec" data-impdata="1">Importer et remplacer mes données</button></div>`};
 MV.import=()=>{const hasRules=S.cfg.rules.length;
@@ -381,15 +424,15 @@ MV.cloture=()=>{const y=route.year||Math.floor(route.ym/12),end=y+"-12-31";const
  <h3>Marche à suivre</h3><div class="card muted">1. Faites une sauvegarde (Plus > Données > Export).<br>2. Dans Comptes, remplacez le solde initial de chaque compte par son solde au 31/12 et la date par le 31/12.<br>3. Supprimez les transactions de l'année une fois l'export gardé.<br>4. Vérifiez les dettes, objectifs, échéances des récurrents et provisions.</div>`};
 /* ---------- bouton Retour du téléphone ---------- */
 const NAVOK=(()=>{try{return window.top===window.self&&!!history.pushState}catch(e){return false}})();
-const navSnap=()=>({tab:route.tab,sub:route.sub||null,zoom:route.zoom||null,anaTab:route.anaTab,ed:route.ed||null});
-const navDeep=s=>!!(s&&(s.sub||s.zoom||s.ed));
+const navSnap=()=>({tab:route.tab,sub:route.sub||null,zoom:route.zoom||null,anaTab:route.anaTab,ed:route.ed||null,etx:route.etx||null});
+const navDeep=s=>!!(s&&(s.sub||s.zoom||s.ed||s.etx));
 function navSync(){if(!NAVOK)return;try{const sn=navSnap(),k=JSON.stringify(sn),st=history.state;
   if(!st||!st.nk){history.replaceState({nk:k,s:sn},"");return}
   if(st.nk===k)return;
   if(!navDeep(sn)&&!navDeep(st.s))history.replaceState({nk:k,s:sn},"");else history.pushState({nk:k,s:sn},"")}catch(e){}}
-window.addEventListener("popstate",e=>{if(!NAVOK)return;const st=e.state;if(st&&st.s){Object.assign(route,{tab:st.s.tab,sub:st.s.sub,zoom:st.s.zoom,anaTab:st.s.anaTab,ed:st.s.ed});render();scrollTo(0,0)}});
+window.addEventListener("popstate",e=>{if(!NAVOK)return;const st=e.state;if(st&&st.s){Object.assign(route,{tab:st.s.tab,sub:st.s.sub,zoom:st.s.zoom,anaTab:st.s.anaTab,ed:st.s.ed,etx:st.s.etx||null});render();scrollTo(0,0)}});
 function render(){const ae=document.activeElement;if(ae&&ae.closest&&ae.closest("#view")&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&route.tab!=="list"){render.p=1;return}
- if(RO()&&route.tab==="add")route.tab="home";if(RO()&&route.tab==="more"&&route.sub==="import")route.sub=null;
+ if(RO()&&mode!=="wait"&&route.tab==="add")route.tab="home";if(RO()&&route.tab==="more"&&route.sub==="import")route.sub=null;
  render.p=0;$("ttl").textContent={home:"Mes comptes",add:"Saisie",list:"Opérations",ana:"Analyse",more:"Plus"}[route.tab];
  const showM=["home","add","list","ana","more"].includes(route.tab)&&!(route.tab==="more"&&["accs","cats","data","import","recs","provs","debts","goals","rappro"].includes(route.sub));
  $("mnav").style.visibility=showM?"visible":"hidden";$("mlab").textContent=tag(route.ym);
@@ -430,6 +473,7 @@ function parseWorkbook(wb){
   if(us)warn.push(us+" opération(s) avec une sous-catégorie absente de l'onglet Catégories.");
   if(ua)warn.push(ua+" opération(s) avec un compte absent de l'onglet Comptes.");
   const cur=Object.values(S.months).reduce((a,m)=>a+m.length,0);if(cur>0&&n<cur*0.8)warn.push("L'application contient "+cur+" opérations, ce classeur n'en contient que "+n+".");
+  {const pq=pend().length;if(pq)warn.unshift(pq+" opération(s) saisie(s) dans l'application ne sont pas encore reportées dans le tableur : ce remplacement les effacerait. Exportez-les d'abord (Plus > Données > Opérations à reporter).")}
   return{cfg,months,n,warn}}
 const BK="mc-bak",BKS="mc-bak-snz";
 function bakGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
@@ -447,7 +491,7 @@ async function applyImport(x){
  route.xl=null;render()}
 /* ---------- événements ---------- */
 document.addEventListener("focusout",()=>setTimeout(()=>{if(render.p&&!(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)))render()},50));
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{route.zoom=null;route.tab=b.dataset.t;route.sub=null;route.ed=null;render();scrollTo(0,0)});
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{route.zoom=null;route.etx=null;route.tab=b.dataset.t;route.sub=null;route.ed=null;render();scrollTo(0,0)});
 $("prev").onclick=()=>{route.ym--;route.year=null;render()};$("next").onclick=()=>{route.ym++;route.year=null;render()};
 function parseStatement(txt,acc){const T=allTx();const out=[];
  txt.split(/\r?\n/).forEach(line=>{line=line.trim();if(!line)return;const sep=line.includes(";")?";":line.includes("\t")?"\t":",";const c=line.split(sep).map(x=>x.trim().replace(/^"|"$/g,""));
@@ -459,19 +503,27 @@ function parseStatement(txt,acc){const T=allTx();const out=[];
   const dup=T.some(t=>t.d===d&&t.acc===acc&&Math.abs(t.amt-amt)<0.005);out.push({d,lbl:label,amt:R2(amt),sub,dup,on:!dup&&!!sub})});return out}
 document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.dataset&&e.target.dataset.zoom!==undefined&&e.target.getAttribute("role")==="button"){e.preventDefault();e.target.click()}});
 document.addEventListener("click",e=>{const z=e.target.closest("[data-zoom]");if(z){route.zoom=z.dataset.zoom||null;render();scrollTo(0,0);return}
+ const op=e.target.closest("[data-open]");if(op&&!RO()){const id=op.dataset.open,k=txKey(id);if(k){route.eret={tab:route.tab,sub:route.sub||null};route.tab="list";route.sub=null;route.etx=id;render();scrollTo(0,0);return}}
+ const rw=e.target.closest("[data-sw]");if(rw&&!e.target.closest("button,summary,a,input,select,textarea,label")&&!RO()&&Date.now()-swT>500){route.eret=null;route.etx=rw.dataset.sw;render();scrollTo(0,0);return}
  const t=e.target.closest("button,summary");if(!t)return;const D=t.dataset;
- if(D.go!==undefined){const[a,b]=D.go.split(":");route.zoom=null;route.tab=a;route.sub=b||null;route.ed=null;render();scrollTo(0,0);return}
+ if(D.go!==undefined){const[a,b]=D.go.split(":");route.zoom=null;route.etx=null;route.tab=a;route.sub=b||null;route.ed=null;render();scrollTo(0,0);return}
  if(D.pal){setPal(D.pal);render();return}
- if(D.ana){route.zoom=null;route.anaTab=D.ana;render();return}
+ if(D.ana){route.zoom=null;route.etx=null;route.anaTab=D.ana;render();return}
  if(D.sign){route.sign=+D.sign;render();return}
  if(D.ed!==undefined){if(D.ed==="")route.ed=null;else{const[k,i]=D.ed.split(":");route.ed={key:k,i:i==="new"?"new":+i}}render();setTimeout(()=>{const f=$("ef");f&&f.scrollIntoView({block:"center"})},30);return}
  if(D.del){if(t.dataset.sure){const[k,i]=D.del.split(":");const sc=SCH[k];S.cfg[sc.k].splice(+i,1);route.ed=null;saveCfg();toast("Supprimé.")}else{t.textContent="Confirmer la suppression ?";t.dataset.sure=1}return}
- if(D.pt){const k=Object.keys(S.months).find(k=>S.months[k].some(x=>x.id===D.pt)),x=S.months[k].find(x=>x.id===D.pt);x.ok=!x.ok;saveMonth(k);return}
- if(D.tdel){if(t.dataset.sure){const k=Object.keys(S.months).find(k=>S.months[k].some(x=>x.id===D.tdel));S.months[k]=S.months[k].filter(x=>x.id!==D.tdel);saveMonth(k)}else{t.textContent="Confirmer ?";t.dataset.sure=1}return}
- if(D.rec!==undefined){const r=S.cfg.recs[+D.rec],m=route.ym,d=dOf(m,Math.min(+r.next.slice(8,10)||1,28)),k=kOf(m);(S.months[k]=S.months[k]||[]).push({id:uid(),d,acc:r.acc,sub:r.sub,lbl:r.n,amt:(r.sens==="Revenu"?1:-1)*r.amt,ok:false});saveMonth(k);toast("Opération saisie.");return}
+ if(D.pt){togglePt(D.pt);return}
+ if(D.tdel){etxClose();delTx(D.tdel);return}
+ if(D.rec!==undefined){const r=S.cfg.recs[+D.rec],m=t.dataset.cur?CUR:route.ym,d=dOf(m,Math.min(+r.next.slice(8,10)||1,28)),k=kOf(m),nid=uid();(S.months[k]=S.months[k]||[]).push({a:1,id:nid,d,acc:r.acc,sub:r.sub,lbl:r.n,amt:(r.sens==="Revenu"?1:-1)*r.amt,ok:false});saveMonth(k);vib();toast("✓ Opération saisie.",undoAdd(k,nid));return}
  if(D.applyxl){const x=route.xl;if(!x||x.err)return;if(!t.dataset.sure){t.textContent="Confirmer : remplacer toutes les données ?";t.dataset.sure=1;return}
   t.disabled=true;applyImport(x).then(()=>toast("Classeur importé.")).catch(()=>toast("Import impossible."));return}
- if(D.bak!==undefined){bakDownload();return}
+ if(D.etx!==undefined){if(D.etx)route.etx=D.etx;else etxClose();render();scrollTo(0,0);return}
+  if(D.nc!==undefined){const t0=allTx().find(x=>x.id===D.nc);if(!t0)return;const key=[t0.d,t0.acc,t0.lbl,t0.amt].join("|"),ids=allTx().filter(x=>x.id===t0.id||[x.d,x.acc,x.lbl,x.amt].join("|")===key).map(x=>x.id),ks=new Set();ids.forEach(id=>{const k=txKey(id);ks.add(k);S.months[k].find(z=>z.id===id).nc=1});etxClose();ks.forEach(k=>saveMonth(k));toast("Signalement retiré pour cette opération.",()=>{const k2=new Set();ids.forEach(id=>{const k=txKey(id);if(k){delete S.months[k].find(z=>z.id===id).nc;k2.add(k)}});k2.forEach(k=>saveMonth(k))});return}
+  if(D.pcopy!==undefined||D.pcopyok!==undefined){const txt=D.pcopy!==undefined?pendTSV():pendOK();(async()=>{try{await navigator.clipboard.writeText(txt);toast("Copié. Collez dans le tableur.")}catch(x){const ta=$("pt");if(ta){ta.value=txt;ta.focus();ta.select();toast("Copie impossible : texte sélectionné, copiez-le à la main.")}}})();return}
+  if(D.pmark!==undefined){const ids=pend().map(x=>x.id);if(!ids.length)return;const ks=new Set();ids.forEach(id=>{const k=txKey(id);ks.add(k);S.months[k].find(z=>z.id===id).x=1});ks.forEach(k=>saveMonth(k));toast(ids.length+" opération(s) marquée(s) comme reportées.",()=>{const k2=new Set();ids.forEach(id=>{const k=txKey(id);if(k){delete S.months[k].find(z=>z.id===id).x;k2.add(k)}});k2.forEach(k=>saveMonth(k))});return}
+  if(D.undo!==undefined){const u=toast.u;toast.u=null;$("toast").hidden=true;if(u)u();return}
+  if(D.lfreset!==undefined){route.f={};render();return}
+  if(D.bak!==undefined){bakDownload();return}
   if(D.bakshare!==undefined){bakShare();return}
   if(D.bakno!==undefined){bakSet(BKS,new Date().toISOString());render();return}
   if(D.applybk!==undefined){const b=route.bk;if(!b||b.err)return;if(!t.dataset.sure){t.textContent="Confirmer : remplacer toutes les données ?";t.dataset.sure=1;return}restoreAll(b.d);toast("Sauvegarde restaurée.");return}
@@ -480,24 +532,43 @@ document.addEventListener("click",e=>{const z=e.target.closest("[data-zoom]");if
   if(DB){queue(async()=>{await DB.doc("cfg/main").set(clone(S.cfg));for(const k of Object.keys(S.months))await DB.doc("tx/"+k).set({items:clone(S.months[k])})})}else saveLocal();render();toast("Import réussi.")}catch(err){toast("Texte invalide : collez l'export complet.")}return}
  if(D.parse){route.iAcc=$("iacc").value;route.iText=$("itxt").value;route.iRows=parseStatement(route.iText,route.iAcc);if(!route.iRows.length)toast("Aucune ligne lue : vérifiez le format.");render();return}
  if(D.addimp){const rows=route.iRows.filter(r=>r.on);if(rows.some(r=>!r.sub)){toast("Choisissez une sous-catégorie pour chaque ligne cochée.");return}
-  if(!rows.length){toast("Aucune ligne cochée.");return}const ks=new Set();rows.forEach(r=>{const k=r.d.slice(0,7);(S.months[k]=S.months[k]||[]).push({id:uid(),d:r.d,acc:route.iAcc,sub:r.sub,lbl:r.lbl,amt:r.amt,ok:true});ks.add(k)});
+  if(!rows.length){toast("Aucune ligne cochée.");return}const ks=new Set();rows.forEach(r=>{const k=r.d.slice(0,7);(S.months[k]=S.months[k]||[]).push({a:1,id:uid(),d:r.d,acc:route.iAcc,sub:r.sub,lbl:r.lbl,amt:r.amt,ok:true});ks.add(k)});
   ks.forEach(k=>saveMonthQuiet(k));if(!DB)saveLocal();route.iRows=null;route.iText="";S.empty=false;render();toast(rows.length+" opération(s) ajoutée(s).");return}});
 document.addEventListener("change",async e=>{const t=e.target;
+ if(t.id==="fs"||t.id==="fc")t.dataset.t=1;
+ if(t.id&&t.id.startsWith("lf_")&&t.tagName==="SELECT"){(route.f=route.f||{})[t.id.slice(3)]=t.value;render();return}
  if(t.id==="rotog"){S.cfg.vitrine=t.checked;saveCfg();return}
  if(t.id==="bf"&&t.files&&t.files[0]){const f=t.files[0];try{const d=JSON.parse(await f.text());if(!d||!d.cfg||!d.months||typeof d.months!=="object"||!Array.isArray(d.cfg.accounts)||!Array.isArray(d.cfg.subs))throw 0;route.bk={name:f.name,d,at:d.at||"",n:Object.values(d.months).reduce((a,m)=>a+m.length,0)}}catch(err){route.bk={err:"Ce fichier n'est pas une sauvegarde de l'application."}}t.blur();render();return}
   if(t.id==="xf"&&t.files&&t.files[0]){const f=t.files[0];try{if(!window.XLSX)throw new Error("Lecteur de tableur indisponible : vérifiez la connexion.");
    const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});const r=parseWorkbook(wb);route.xl={name:f.name,cfg:r.cfg,months:r.months,n:r.n,warn:r.warn}}catch(err){route.xl={err:(err&&err.message)||"Fichier illisible."}}
   t.blur();render();return}
 if(t.dataset.ik!==undefined){route.iRows[+t.dataset.ik].on=t.checked}if(t.dataset.is!==undefined){const r=route.iRows[+t.dataset.is];r.sub=t.value;if(t.value&&!r.dup)r.on=true;render()}});
-document.addEventListener("input",e=>{if(e.target.id==="q"){route.q=e.target.value;const p=e.target.selectionStart;render();const q=$("q");q.focus();q.setSelectionRange(p,p)}});
+document.addEventListener("input",e=>{const t=e.target;
+ if(t.id==="q"||t.id==="lf_min"){if(t.id==="q")route.q=t.value;else(route.f=route.f||{}).min=t.value;const p=t.selectionStart;render();const q=$(t.id);q.focus();try{q.setSelectionRange(p,p)}catch(x){}return}
+ if(t.id==="fl"){const o=route.lm&&route.lm[t.value];if(o){const fs=$("fs"),fc=$("fc");if(fs&&!fs.dataset.t&&[...fs.options].some(x=>x.value===o.sub))fs.value=o.sub;if(fc&&!fc.dataset.t&&[...fc.options].some(x=>x.value===o.acc))fc.value=o.acc}}});
+document.addEventListener("toggle",e=>{if(e.target.id==="lfd")route.fo=e.target.open},true);
 document.addEventListener("submit",e=>{e.preventDefault();const f=e.target;
+ if(f.id==="ef"){const id=f.dataset.id,k0=txKey(id);if(!k0)return;const v=num($("ef_a").value);if(isNaN(v)||v===0){toast("Montant invalide.");return}const d=$("ef_d").value;if(!d){toast("Date invalide.");return}
+  const ym0=route.ym,k1=d.slice(0,7),o0=clone(S.months[k0]),o1=clone(S.months[k1]||[]),t=S.months[k0].find(z=>z.id===id);
+  t.d=d;t.acc=$("ef_c").value;t.sub=$("ef_s").value;t.lbl=$("ef_l").value.trim();t.amt=R2(Math.abs(v)*($("ef_t").value==="d"?-1:1));t.ok=$("ef_o").checked;
+  if(k1!==k0){S.months[k0]=S.months[k0].filter(z=>z.id!==id);(S.months[k1]=S.months[k1]||[]).push(t)}
+  const back=!!route.eret;etxClose();route.flash=id;setTimeout(()=>{if(route.flash===id)route.flash=null},5000);if(!back)route.ym=mOf(d);saveMonth(k0);if(k1!==k0)saveMonth(k1);vib();
+  toast("✓ Modification enregistrée.",()=>{if(!back)route.ym=ym0;S.months[k0]=o0;if(k1!==k0)S.months[k1]=o1;saveMonth(k0);if(k1!==k0)saveMonth(k1)});return}
  if(f.id==="ef"){saveForm(f);return}
  if(f.id==="thrf"){const v=num($("thr").value);if(isNaN(v)||v<=0)return;S.cfg.thr=v/100;saveCfg();toast("Seuil enregistré.");return}
  if(f.dataset.rc){const bal=num(f.bal.value);if(isNaN(bal)){toast("Solde invalide.");return}const acc=f.dataset.rc;S.cfg.recon=S.cfg.recon.filter(r=>r.acc!==acc);S.cfg.recon.push({acc,date:f.date.value,bal});saveCfg();toast("Relevé enregistré.");return}
  if(f.id==="f"){const v=num($("fa").value);if(isNaN(v)||v===0){toast("Montant invalide.");return}const sign=route.sign||-1,sub=$("fs").value,acc=$("fc").value;if(!sub||!acc){toast("Créez d'abord un compte et des catégories (Plus).");return}
-  const d=$("fd").value,k=d.slice(0,7);(S.months[k]=S.months[k]||[]).push({id:uid(),d,acc,sub,lbl:$("fl").value.trim(),amt:R2(Math.abs(v)*sign),ok:false});route.ym=mOf(d);saveMonth(k);toast("Opération enregistrée.")}});
+  const d=$("fd").value,k=d.slice(0,7);const nid=uid();(S.months[k]=S.months[k]||[]).push({a:1,id:nid,d,acc,sub,lbl:$("fl").value.trim(),amt:R2(Math.abs(v)*sign),ok:false});route.ym=mOf(d);route.flash=nid;setTimeout(()=>{if(route.flash===nid)route.flash=null},5000);lastSet(acc,sign,sub);saveMonth(k);vib();toast("✓ Opération enregistrée.",undoAdd(k,nid))}});
+/* ---------- glissement sur les opérations ---------- */
+let sw=null,swT=0;
+document.addEventListener("touchstart",e=>{const r=e.target.closest&&e.target.closest("[data-sw]");if(!r||e.touches.length!==1){sw=null;return}const t=e.touches[0];sw={r,x:t.clientX,y:t.clientY,dx:0,lock:null}},{passive:true});
+document.addEventListener("touchmove",e=>{if(!sw)return;const t=e.touches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;if(sw.lock===null&&(Math.abs(dx)>10||Math.abs(dy)>10))sw.lock=Math.abs(dx)>Math.abs(dy)*1.5?"h":"v";
+ if(sw.lock==="h"){sw.dx=dx;sw.r.style.transition="none";sw.r.style.transform="translateX("+Math.max(-110,Math.min(110,dx))+"px)";sw.r.style.background="color-mix(in srgb,var(--"+(dx>0?"good":"bad")+") 18%,var(--surface))"}},{passive:true});
+document.addEventListener("touchend",()=>{if(!sw)return;const{r,dx,lock}=sw;sw=null;r.style.transition="";r.style.transform="";r.style.background="";if(lock==="h")swT=Date.now();if(lock==="h"&&Math.abs(dx)>80){const id=r.dataset.sw;if(dx>0)togglePt(id);else delTx(id)}});
+document.addEventListener("touchcancel",()=>{if(sw){sw.r.style.transform="";sw.r.style.background="";sw=null}});
 /* ---------- démarrage ---------- */
-async function boot(){mode="wait";render();
+async function boot(){try{const a=new URLSearchParams(location.search).get("a");if(a==="add"||a==="rev"){route.tab="add";route.sign=a==="rev"?1:-1;history.replaceState(null,"",location.pathname)}}catch(e){}
+ mode="wait";render();
  let db=null;try{db=window.claude&&await window.claude.use("db")}catch(e){db=null}
  if(!db){mode="local";loadLocal();render();return}
  DB=db;let got={cfg:false,tx:false},timer=setTimeout(()=>{if(!(got.cfg&&got.tx)){mode="local";DB=null;loadLocal();render();toast("Synchronisation indisponible : mode local.")}},10000);
