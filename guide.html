@@ -1,0 +1,358 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><title>Guide Mes Comptes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+:root{--bg:#f3f5f6;--surface:#fff;--ink:#14212b;--muted:#5d6b76;--line:#dde3e7;--accent:#0b6e6e;--accent-ink:#fff;--good:#1b7a43;--warn:#a46300;--bad:#b3261e;--chip:#e6eef0;
+--hero:#0b5e63;--hero-ink:#fff;--hero-mut:#bfe3e0;--revbg:#e2f3e7;--revfg:#14612f;--depbg:#fbe8e2;--depfg:#a63a1c;--warnbg:#fbf0d9;--blue:#1d56b3;--bluebg:#e4edfb;--yel:#fff3b8;
+--f-body:'Inter',system-ui,sans-serif;--f-head:'Space Grotesk','Inter',system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f171d;--surface:#17222a;--ink:#e8eef2;--muted:#9aa9b4;--line:#27343d;--accent:#4fc3b8;--accent-ink:#06201e;--good:#5ccf8a;--warn:#e3a43b;--bad:#ff8a80;--chip:#1f2e37;--hero:#14574f;--hero-ink:#f2fbf9;--hero-mut:#a6d6d0;--revbg:#173a29;--revfg:#7fdca0;--depbg:#3b2520;--depfg:#ffa58a;--warnbg:#3a2f14;--blue:#8ab6ee;--bluebg:#1c2837;--yel:#4a4216;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f171d;--surface:#17222a;--ink:#e8eef2;--muted:#9aa9b4;--line:#27343d;--accent:#4fc3b8;--accent-ink:#06201e;--good:#5ccf8a;--warn:#e3a43b;--bad:#ff8a80;--chip:#1f2e37;--hero:#14574f;--hero-ink:#f2fbf9;--hero-mut:#a6d6d0;--revbg:#173a29;--revfg:#7fdca0;--depbg:#3b2520;--depfg:#ffa58a;--warnbg:#3a2f14;--blue:#8ab6ee;--bluebg:#1c2837;--yel:#4a4216;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body);margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+.wrap{max-width:760px;margin:0 auto}
+.hero{background:var(--hero);color:var(--hero-ink);border-radius:0 0 22px 22px;margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:34px max(20px,env(safe-area-inset-left,0px)) 26px;}
+.hero .in{max-width:760px;margin:0 auto}
+.hero .k{font:600 12px var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--hero-mut)}
+.hero h1{font:700 34px/1.1 var(--f-head);margin:8px 0 10px;text-wrap:balance}
+.hero p{margin:0;color:var(--hero-mut);max-width:52ch}
+.hero .stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.hero .stats span{background:rgba(255,255,255,.14);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--hero-ink)}
+nav.toc{position:sticky;top:0;z-index:5;background:var(--bg);margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;display:flex;gap:6px;scrollbar-width:none}
+nav.toc::-webkit-scrollbar{display:none}
+nav.toc a{flex:none;background:var(--chip);color:var(--ink);text-decoration:none;font-size:13px;font-weight:500;padding:6px 12px;border-radius:99px}
+nav.toc a:hover{background:var(--accent);color:var(--accent-ink)}
+section{padding-top:8px}
+h2{font:700 22px/1.2 var(--f-head);margin:34px 0 4px;text-wrap:balance}
+h2 .n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-size:14px;margin-right:9px;vertical-align:2px}
+h3{font:700 16px var(--f-head);margin:22px 0 6px}
+.lead{color:var(--muted);margin:2px 0 14px;max-width:62ch}
+p{margin:0 0 10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 12px;min-width:0}
+.card>:last-child{margin-bottom:0}
+.card h3:first-child{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px;margin-bottom:12px}
+.grid .card{margin:0}
+.muted{color:var(--muted);font-size:13px}
+.tag{display:inline-block;background:var(--chip);border-radius:6px;padding:1px 8px;font-size:12px;font-weight:600;color:var(--accent);margin-right:4px;white-space:nowrap}
+.tag.rev{background:var(--revbg);color:var(--revfg)}.tag.dep{background:var(--depbg);color:var(--depfg)}
+kbd,code{font:500 .88em ui-monospace,Menlo,Consolas,monospace;background:var(--chip);border-radius:5px;padding:1px 6px}
+.path{font-weight:600;color:var(--accent);white-space:normal}
+ol.steps{list-style:none;counter-reset:s;padding:0;margin:0}
+ol.steps>li{counter-increment:s;position:relative;padding:0 0 12px 42px;min-height:30px}
+ol.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:700 13px var(--f-head)}
+ol.steps>li:not(:last-child)::after{content:"";position:absolute;left:13px;top:32px;bottom:2px;width:2px;background:var(--line)}
+ul.l{margin:0 0 10px;padding-left:20px}ul.l li{margin:3px 0}
+.note{border-left:4px solid var(--accent);background:var(--chip);border-radius:0 10px 10px 0;padding:10px 14px;margin:0 0 12px}
+.note.warn{border-color:var(--warn);background:var(--warnbg)}
+.note.bad{border-color:var(--bad);background:var(--depbg)}
+.note b:first-child{display:block;font:700 13px var(--f-head);margin-bottom:2px}
+.flow{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin:6px 0 14px}
+.flow .box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.flow .box b{display:block;font:700 16px var(--f-head)}
+.flow .box.hl{background:var(--hero);color:var(--hero-ink);border-color:var(--hero)}
+.flow .box.hl .muted{color:var(--hero-mut)}
+.flow .arr{text-align:center;font-size:12px;color:var(--muted);line-height:1.3;max-width:120px}
+.flow .arr i{display:block;font-style:normal;font-size:20px;color:var(--accent)}
+@media (max-width:520px){.flow{grid-template-columns:1fr}.flow .arr{max-width:none}.flow .arr i{transform:rotate(90deg)}}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.legend span{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-size:13px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:7px;vertical-align:-1px;border:1px solid var(--line)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin-bottom:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;font:600 12px var(--f-body);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sheet{display:grid;gap:4px}
+.sheet b{font:700 15px var(--f-head)}
+.sheet .row{display:grid;grid-template-columns:92px 1fr;gap:8px;font-size:13.5px}
+.sheet .row span:first-child{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+.gp{font:700 12px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:22px 0 8px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:0 0 8px;padding:0 14px}
+details[open]{padding-bottom:12px}
+summary{cursor:pointer;font-weight:600;padding:12px 0;list-style:none;display:flex;justify-content:space-between;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--accent);font:700 18px var(--f-head);line-height:1}
+details[open] summary::after{content:"–"}
+details p:last-child{margin-bottom:0}
+.sig{display:flex;gap:10px;flex-wrap:wrap}
+.pill{border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600}
+.pill.g{background:var(--revbg);color:var(--revfg)}.pill.o{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--depbg);color:var(--depfg)}
+footer{margin-top:34px;color:var(--muted);font-size:13px;text-align:center}
+@media print{
+ :root{color-scheme:light}
+ html{scroll-padding-top:0}
+ body{background:#fff;font-size:13.5px;line-height:1.5}
+ nav.toc{display:none}
+ .hero{border-radius:0 0 18px 18px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .card,.note,details,.tw,.flow,ol.steps>li,.sheet{break-inside:avoid}
+ h2,h3,.gp,.lead{break-after:avoid}
+ .grid{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+ .sheet .row{grid-template-columns:70px 1fr}
+ details>summary::after{content:""}
+}
+</style></head><body>
+
+<div class="wrap">
+<a href="./" style="display:inline-block;margin:12px 0 0;color:var(--accent);font-weight:600;text-decoration:none">‹ Retour à l'application</a>
+<div class="hero"><div class="in">
+ <div class="k">Guide d'utilisation</div>
+ <h1>Mes Comptes</h1>
+ <p>Le classeur de suivi de comptes et l'application qui l'accompagne : ce que chacun fait, comment les faire travailler ensemble, et les gestes de tous les jours.</p>
+ <div class="stats"><span>21 onglets</span><span>Application installable</span><span>Mise à jour : 22 novembre 2026</span></div>
+</div></div>
+
+<nav class="toc" aria-label="Sommaire">
+ <a href="#vue">Vue d'ensemble</a><a href="#demarrer">Démarrer</a><a href="#onglets">Les onglets</a><a href="#appli">L'application</a><a href="#saisie">Saisir</a><a href="#verifier">Vérifier</a><a href="#reporter">Reporter</a><a href="#sauvegarde">Sauvegarder</a><a href="#releve">Relevé</a><a href="#routine">Routine</a><a href="#modifier">Modifier</a><a href="#faq">Bon à savoir</a>
+</nav>
+
+<section id="vue">
+ <h2><span class="n">1</span>Vue d'ensemble</h2>
+ <p class="lead">Deux outils, une seule source de vérité : le classeur.</p>
+ <div class="flow">
+  <div class="box"><b>Classeur .ods</b><span class="muted">LibreOffice · source des données · calculs, budgets, bilans</span></div>
+  <div class="arr"><i>⇄</i>import du classeur<br>report des saisies</div>
+  <div class="box hl"><b>Application</b><span class="muted">consultation sur téléphone, saisie rapide, graphiques</span></div>
+ </div>
+ <div class="grid">
+  <div class="card"><h3>Le classeur</h3><p class="muted">Vous y saisissez peu de choses : comptes, catégories, opérations. Soldes, totaux, écarts, alertes et graphiques se calculent seuls.</p></div>
+  <div class="card"><h3>L'application</h3><p class="muted">Lit votre classeur pour l'afficher confortablement. Elle sait aussi enregistrer des opérations, que vous reportez ensuite dans le classeur.</p></div>
+  <div class="card"><h3>La règle d'or</h3><p class="muted">Le classeur gagne toujours. Réimporter le classeur remplace ce que contient l'application : reportez vos saisies d'abord.</p></div>
+ </div>
+</section>
+
+<section id="demarrer">
+ <h2><span class="n">2</span>Démarrer avec le classeur</h2>
+ <p class="lead">Remplissez les onglets dans cet ordre : catégories et comptes alimentent les menus déroulants des autres.</p>
+ <div class="card"><ol class="steps">
+  <li><b>Catégories</b><br><span class="muted">Catégories principales (25 max., chacune Revenu ou Dépense, et Variable ou Fixe pour les dépenses), puis sous-catégories (120 max.) avec leur catégorie principale et un budget mensuel. Le nom d'une sous-catégorie doit être unique.</span></li>
+  <li><b>Comptes</b><br><span class="muted">Une ligne par compte (20 max.) : type, établissement, solde initial et date de ce solde.</span></li>
+  <li><b>Transactions</b><br><span class="muted">Une opération par ligne (environ 5 000). Compte et sous-catégorie se choisissent dans une liste ; la catégorie principale se remplit seule. Entrée d'argent en positif, dépense en négatif.</span></li>
+  <li><b>Dettes</b><br><span class="muted">Une ligne par crédit (12 max.) : capital emprunté, taux annuel, mensualité, date de début, capital déjà remboursé.</span></li>
+  <li><b>Récurrents</b><br><span class="muted">Abonnements, charges fixes, revenus réguliers (40 max.) : montant, fréquence, prochaine échéance.</span></li>
+  <li><b>Objectifs</b><br><span class="muted">Projets d'épargne (10 max.) : montant cible, date cible, somme déjà épargnée.</span></li>
+ </ol></div>
+ <div class="note"><b>Puis réglez les périodes</b>Mois à analyser : cellule B3 de <i>Vue mensuelle</i>. Année : cellule B3 de <i>Vue annuelle</i>. Remplacez ou effacez les lignes d'exemple sans supprimer les lignes elles-mêmes, pour garder les formules.</div>
+ <h3>Les trois couleurs du classeur</h3>
+ <div class="legend">
+  <span><i class="sw" style="background:var(--blue)"></i><b style="color:var(--blue)">Texte bleu</b> : à remplir par vous</span>
+  <span><i class="sw" style="background:var(--yel)"></i><b>Case jaune</b> : réglage (mois, année, seuil…)</span>
+  <span><i class="sw" style="background:var(--ink)"></i><b>Texte noir</b> : formule, à ne pas écraser</span>
+ </div>
+ <h3>Le solde initial</h3>
+ <div class="card">
+  <p>C'est le montant présent sur un compte <b>à la date où vous commencez le suivi</b>, avant la première opération saisie. Il se renseigne dans <b>Comptes</b>, avec sa date.</p>
+  <p><span class="tag">Solde actuel</span> = solde initial + somme de toutes les opérations du compte. Un solde initial faux décale tous les soldes d'autant.</p>
+  <p class="muted">Où le trouver : le solde de votre relevé bancaire à la veille de votre première opération. Si vous commencez au 1er janvier, prenez celui du 31 décembre, et ne saisissez que les opérations postérieures.</p>
+ </div>
+</section>
+
+<section id="onglets">
+ <h2><span class="n">3</span>Les onglets un par un</h2>
+ <p class="lead">Pour chacun : ce que vous saisissez, et ce que le classeur calcule à votre place.</p>
+
+ <div class="gp">Pour saisir</div>
+ <div class="grid">
+  <div class="card sheet"><b>Catégories</b><div class="row"><span>Saisie</span><span>Catégories (sens, type Variable/Fixe), sous-catégories, budgets</span></div><div class="row"><span>Calculé</span><span>Sens de chaque sous-catégorie, budget par catégorie</span></div></div>
+  <div class="card sheet"><b>Comptes</b><div class="row"><span>Saisie</span><span>Nom, type, établissement, solde initial et sa date</span></div><div class="row"><span>Calculé</span><span>Solde actuel de chaque compte et total</span></div></div>
+  <div class="card sheet"><b>Transactions</b><div class="row"><span>Saisie</span><span>Date, compte, sous-catégorie, libellé, montant, Pointé</span></div><div class="row"><span>Calculé</span><span>Mois, catégorie principale, colonne Contrôle (doublon, montant inhabituel, sous-catégorie inconnue)</span></div></div>
+  <div class="card sheet"><b>Import relevé</b><div class="row"><span>Saisie</span><span>Compte (B3) et relevé en colonnes A à F, dès la ligne 10 (300 lignes)</span></div><div class="row"><span>Calculé</span><span>Sous-catégorie proposée, doublons écartés, bloc H à L à copier</span></div></div>
+  <div class="card sheet"><b>Règles import</b><div class="row"><span>Saisie</span><span>Mot-clé du libellé → sous-catégorie (100 règles)</span></div><div class="row"><span>Calculé</span><span>Rien : appliqué par Import relevé, la dernière règle l'emporte</span></div></div>
+  <div class="card sheet"><b>Ce mois-ci</b><div class="row"><span>Saisie</span><span>Mois (B3)</span></div><div class="row"><span>Calculé</span><span>Opérations récurrentes attendues, statut Saisi ou À saisir, reste à saisir</span></div></div>
+ </div>
+
+ <div class="gp">Pour comprendre</div>
+ <div class="grid">
+  <div class="card sheet"><b>Synthèse</b><div class="row"><span>Saisie</span><span>Rien</span></div><div class="row"><span>Calculé</span><span>Patrimoine, dettes, patrimoine net, revenus, dépenses, solde et taux d'épargne du mois, catégories en alerte, provisions, solde dans 12 mois</span></div></div>
+  <div class="card sheet"><b>Vue mensuelle</b><div class="row"><span>Saisie</span><span>Mois étudié (B3)</span></div><div class="row"><span>Calculé</span><span>Indicateurs comparés au mois précédent, budget du jour, dépenses par catégorie avec alertes, dix plus grosses dépenses, liste du mois, deux graphiques</span></div></div>
+  <div class="card sheet"><b>Bilan du mois</b><div class="row"><span>Saisie</span><span>Rien</span></div><div class="row"><span>Calculé</span><span>Compte rendu rédigé : évolution, poste principal, plus forte hausse, points forts et à surveiller</span></div></div>
+  <div class="card sheet"><b>Graphiques</b><div class="row"><span>Saisie</span><span>Catégorie à détailler (liste)</span></div><div class="row"><span>Calculé</span><span>Dix graphiques : revenus/dépenses, solde cumulé, camemberts, budget vs réel, dettes, prévisionnel, objectifs</span></div></div>
+  <div class="card sheet"><b>Budget</b><div class="row"><span>Saisie</span><span>Seuil d'alerte (B4)</span></div><div class="row"><span>Calculé</span><span>Réel, écart, % du budget utilisé, alerte verte, orange ou rouge</span></div></div>
+  <div class="card sheet"><b>Vue annuelle</b><div class="row"><span>Saisie</span><span>Année (B3)</span></div><div class="row"><span>Calculé</span><span>Tableau mois par mois, solde du mois et cumulé, détail par sous-catégorie</span></div></div>
+  <div class="card sheet"><b>Année sur année</b><div class="row"><span>Saisie</span><span>Année étudiée (B3)</span></div><div class="row"><span>Calculé</span><span>Comparaison avec l'année précédente, période comparable, écarts par catégorie</span></div></div>
+ </div>
+
+ <div class="gp">Pour contrôler</div>
+ <div class="grid">
+  <div class="card sheet"><b>Rapprochement</b><div class="row"><span>Saisie</span><span>Date et solde du relevé</span></div><div class="row"><span>Calculé</span><span>Solde pointé, écart, opérations non pointées, statut OK ou Écart à vérifier</span></div></div>
+  <div class="card sheet"><b>Contrôles</b><div class="row"><span>Saisie</span><span>Rien</span></div><div class="row"><span>Calculé</span><span>Opérations à vérifier, poids des charges récurrentes, prélèvements absents, montants changés</span></div></div>
+ </div>
+
+ <div class="gp">Pour planifier</div>
+ <div class="grid">
+  <div class="card sheet"><b>Prévisionnel</b><div class="row"><span>Saisie</span><span>Premier mois (B3)</span></div><div class="row"><span>Calculé</span><span>Projection 12 mois : récurrents, mensualités, flux net, solde de fin de mois</span></div></div>
+  <div class="card sheet"><b>Récurrents</b><div class="row"><span>Saisie</span><span>Libellé, sens, sous-catégorie, compte, montant, fréquence, échéance, actif</span></div><div class="row"><span>Calculé</span><span>Coût mensuel et annuel, dernier montant constaté, alerte de variation</span></div></div>
+  <div class="card sheet"><b>Provisions</b><div class="row"><span>Saisie</span><span>Libellé, type, montant, échéance, déjà mis de côté (20)</span></div><div class="row"><span>Calculé</span><span>Mois restants, somme à mettre de côté par mois</span></div></div>
+  <div class="card sheet"><b>Objectifs</b><div class="row"><span>Saisie</span><span>Objectif, montant cible, date cible, déjà épargné</span></div><div class="row"><span>Calculé</span><span>Reste à épargner, effort mensuel, % atteint</span></div></div>
+  <div class="card sheet"><b>Dettes</b><div class="row"><span>Saisie</span><span>Créancier, capital, taux, mensualité, date de début, capital remboursé</span></div><div class="row"><span>Calculé</span><span>Capital restant dû, % remboursé, mois restants, intérêts du mois</span></div></div>
+  <div class="card sheet"><b>Clôture d'année</b><div class="row"><span>Saisie</span><span>Année à clôturer (B3)</span></div><div class="row"><span>Calculé</span><span>Bilan de l'année, soldes au 31/12, dettes et objectifs à reporter, marche à suivre</span></div></div>
+ </div>
+</section>
+
+<section id="appli">
+ <h2><span class="n">4</span>L'application</h2>
+ <p class="lead">Cinq onglets en bas de l'écran, un sélecteur de mois en haut.</p>
+ <div class="tw"><table>
+  <tr><th>Onglet</th><th>Pour quoi faire</th></tr>
+  <tr><td>Accueil</td><td>Solde du mois, bouton « Ajouter une opération », carte « À faire et à surveiller » : prélèvements des 7 prochains jours, opérations à vérifier, montants récurrents différents, catégories au-dessus du seuil.</td></tr>
+  <tr><td>Saisie</td><td>Formulaire d'ajout d'une dépense ou d'un revenu (masqué en mode vitrine).</td></tr>
+  <tr><td>Liste</td><td>Toutes les opérations, avec filtres, pointage, modification.</td></tr>
+  <tr><td>Analyse</td><td>Graphiques et Budget, avec comparaison à votre moyenne.</td></tr>
+  <tr><td>Plus</td><td>Comptes, catégories, dettes, objectifs, récurrents, contrôles, Données (import, export, sauvegarde) et ce guide.</td></tr>
+ </table></div>
+
+ <h3>Mode vitrine ou mode saisie</h3>
+ <div class="grid">
+  <div class="card"><span class="tag">Vitrine</span><span class="tag">par défaut</span><p style="margin-top:8px">Lecture seule. L'application affiche votre classeur sans rien modifier. Un message de 5 secondes le rappelle au lancement.</p></div>
+  <div class="card"><span class="tag rev">Saisie</span><p style="margin-top:8px">Vous pouvez ajouter, modifier, supprimer et pointer des opérations. Activation : décochez « Mode vitrine » dans <span class="path">Plus › Données</span>.</p></div>
+ </div>
+
+ <h3>Importer votre classeur</h3>
+ <div class="card"><ol class="steps">
+  <li>Ouvrez <span class="path">Plus › Données</span>, carte « Importer mon classeur ».</li>
+  <li>Choisissez votre fichier <code>.ods</code> ou <code>.xlsx</code> (il doit être sur le téléphone ou dans Drive).</li>
+  <li>Lisez l'aperçu : nombres d'opérations, comptes, sous-catégories, dettes, objectifs, récurrents. Ils doivent correspondre à votre classeur.</li>
+  <li>Si l'encadré « À vérifier avant de remplacer » apparaît, corrigez le classeur puis réimportez. Sinon, confirmez.</li>
+ </ol></div>
+ <div class="note warn"><b>Ce que l'import remplace</b>Toutes les données de l'application. Si des opérations saisies dans l'application n'ont pas été reportées dans le classeur, l'application vous prévient : elles seraient effacées. L'application garde une sauvegarde avant d'importer.</div>
+ <details><summary>Que signale l'encadré « À vérifier » ?</summary>
+  <ul class="l"><li>Une ligne au-delà d'une capacité (trop de catégories, de comptes…)</li><li>Un onglet introuvable (renommé ou supprimé)</li><li>Une opération sans date ou sans montant</li><li>Une opération dont la sous-catégorie ou le compte n'existe pas dans le classeur</li><li>Un classeur qui contient nettement moins d'opérations que l'application</li></ul>
+ </details>
+
+ <h3>Installer l'application sur Android</h3>
+ <div class="card"><ol class="steps">
+  <li>Déposez les fichiers du dossier <code>A-deposer-sur-GitHub</code> dans votre dépôt GitHub Pages (Add file › Upload files, en remplaçant les anciens).</li>
+  <li>Ouvrez l'adresse du site dans Chrome, puis menu ⋮ › « Installer l'application ».</li>
+  <li>Appui long sur l'icône : raccourcis « Ajouter une dépense » et « Ajouter un revenu ».</li>
+ </ol></div>
+ <div class="note"><b>Après une mise à jour</b>L'application garde l'ancienne version en cache. Retirez-la des applications récentes, rouvrez-la, et recommencez une seconde fois : la nouvelle version se charge au deuxième lancement. Le bouton Retour du téléphone revient à l'écran précédent au lieu de quitter l'application.</div>
+</section>
+
+<section id="saisie">
+ <h2><span class="n">5</span>Saisir et naviguer</h2>
+ <p class="lead">Disponible en mode saisie.</p>
+ <div class="grid">
+  <div class="card"><h3>Saisie rapide</h3><p class="muted">Le champ Libellé propose vos libellés habituels, les plus fréquents d'abord. En choisir un remplit la sous-catégorie et le compte de sa dernière utilisation. Le montant ouvre le clavier numérique.</p></div>
+  <div class="card"><h3>Annuler</h3><p class="muted">Après un enregistrement, une suppression ou un pointage, un bouton « Annuler » reste affiché 6 secondes. La suppression n'a plus d'étape de confirmation.</p></div>
+  <div class="card"><h3>Glisser</h3><p class="muted">Dans la Liste, glisser une opération vers la droite la pointe, vers la gauche la supprime (avec Annuler).</p></div>
+  <div class="card"><h3>Modifier</h3><p class="muted">Touchez une ligne pour ouvrir son formulaire : type, montant, sous-catégorie, libellé, compte, date, pointage.</p></div>
+  <div class="card"><h3>Filtres</h3><p class="muted">Période (mois, année, tout), compte, catégorie, type, pointage, montant minimum, avec le nombre d'opérations et les totaux.</p></div>
+  <div class="card"><h3>Prélèvements du jour</h3><p class="muted">Sur l'accueil, les prélèvements récurrents des 7 prochains jours se saisissent d'un toucher.</p></div>
+ </div>
+ <div class="note warn"><b>Une opération venue du classeur</b>Si vous la corrigez dans l'application, corrigez-la aussi dans le tableur, sinon elle reviendra comme avant au prochain import.</div>
+
+ <h3>Les graphiques détaillés</h3>
+ <p>Dans <span class="path">Analyse › Graphiques</span>, touchez un graphique pour l'ouvrir en version complète. Les camemberts listent toutes les catégories (puis, en touchant une catégorie, ses sous-catégories), classées par montant, avec le pourcentage et le budget utilisé. Les courbes s'accompagnent d'un tableau mois par mois (taux d'épargne, moyenne).</p>
+ <h3>La comparaison à votre moyenne</h3>
+ <p>Dans <span class="path">Analyse › Budget</span>, chaque catégorie indique l'écart avec la moyenne de vos 3 mois précédents.</p>
+ <div class="sig"><span class="pill g">Dans votre moyenne : entre −15 % et +15 %</span><span class="pill r">Rouge : dépense en hausse ou revenu en baisse</span><span class="pill g">Vert : le contraire</span></div>
+ <p class="muted" style="margin-top:8px">Pour le mois en cours, la moyenne s'arrête au même jour du mois (le 21, on compare les 21 premiers jours). Cette comparaison n'existe que dans l'application.</p>
+</section>
+
+<section id="verifier">
+ <h2><span class="n">6</span>Vérifier une opération signalée</h2>
+ <p class="lead">Le classeur et l'application repèrent les opérations suspectes. Un signalement n'est pas forcément une erreur.</p>
+ <div class="grid">
+  <div class="card"><span class="tag dep">Doublon possible</span><p class="muted" style="margin-top:6px">Même date, même compte, même libellé, même montant.</p></div>
+  <div class="card"><span class="tag dep">Montant inhabituel</span><p class="muted" style="margin-top:6px">Plus de 3 fois la moyenne de la sous-catégorie (au moins 4 dépenses et plus de 30 €).</p></div>
+  <div class="card"><span class="tag dep">Sous-catégorie inconnue</span><p class="muted" style="margin-top:6px">Le nom n'existe pas dans l'onglet Catégories.</p></div>
+ </div>
+ <p>Touchez l'opération dans <span class="path">Plus › Contrôles</span>, ou sur l'accueil quand il n'y en a qu'une. Une fiche s'ouvre avec le motif du signalement.</p>
+ <div class="grid">
+  <div class="card"><h3>En mode saisie</h3><p class="muted">Corrigez-la, supprimez-la, ou touchez « Tout est correct : ne plus le signaler ». Pour un doublon, les copies identiques sont traitées ensemble. Un bouton Annuler reste disponible.</p></div>
+  <div class="card"><h3>En mode vitrine</h3><p class="muted">La fiche est en lecture seule : motif, détails, et marche à suivre (corriger dans Transactions puis réimporter). Un bouton « Passer en mode saisie » permet de la modifier ici.</p></div>
+ </div>
+ <p class="muted">Le retrait d'un signalement ne vaut que dans l'application : la colonne Contrôle du tableur continue de signaler l'opération.</p>
+</section>
+
+<section id="reporter">
+ <h2><span class="n">7</span>Reporter vos saisies dans le classeur</h2>
+ <p class="lead">À faire avant chaque réimport. Concerne les opérations saisies dans l'application (formulaire, récurrents, relevé).</p>
+ <div class="card"><ol class="steps">
+  <li><b>Copier les lignes</b><br><span class="muted"><span class="path">Plus › Données › Opérations à reporter dans le tableur</span>, puis « Copier pour Transactions (A à E) ». Collez dans Transactions à la première ligne vide de la colonne A (séparateur : tabulation). Les montants gardent la virgule décimale.</span></li>
+  <li><b>Copier le pointage</b><br><span class="muted">« Copier la colonne Pointé (G) », puis collez dans la colonne G, à partir de la même ligne.</span></li>
+  <li><b>Marquer comme reportées</b><br><span class="muted">Elles ne seront plus proposées. Un bouton Annuler permet de revenir en arrière.</span></li>
+ </ol></div>
+ <p class="muted">L'accueil indique le nombre d'opérations à reporter.</p>
+</section>
+
+<section id="sauvegarde">
+ <h2><span class="n">8</span>Sauvegarder et exporter</h2>
+ <p class="lead">Dans l'application installée, les données ne sont que dans Chrome : vider les données du navigateur ou changer de téléphone les efface.</p>
+ <div class="grid">
+  <div class="card"><h3>Sauvegarde</h3><p class="muted">Dans <span class="path">Plus › Données</span> : « Enregistrer une sauvegarde » crée un fichier dans les téléchargements ; « Envoyer vers Drive ou ailleurs » le place directement dans Drive. Pour restaurer : « Restaurer depuis une sauvegarde », puis confirmez. L'accueil rappelle de sauvegarder après 30 jours.</p></div>
+  <div class="card"><h3>Export (copier)</h3><p class="muted">Copie complète de l'application sous forme de texte : réglages et toutes les opérations. Utile pour passer sur un autre appareil : collez-le dans « Importer (coller un export) ». Ce texte ne s'ouvre pas dans le tableur.</p></div>
+ </div>
+ <div class="note"><b>Ne pas confondre</b>L'export complet transporte l'application. Le report (section 7) met à jour le tableur. Le classeur .ods reste la source principale : en cas de perte, un réimport remet tout en place, sauf les saisies faites seulement dans l'application.</div>
+</section>
+
+<section id="releve">
+ <h2><span class="n">9</span>Importer un relevé bancaire</h2>
+ <p class="lead">Dans le classeur : l'onglet Import relevé classe les lignes à votre place.</p>
+ <div class="card"><ol class="steps">
+  <li><b>Choisir le compte</b> dans la cellule B3.</li>
+  <li><b>Coller le relevé en valeurs</b> (<kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>V</kbd>) dans les colonnes <b>A à E</b>, à partir de la ligne 10 : date, libellé, montant (ou Débit et Crédit). La colonne F permet d'imposer une sous-catégorie.</li>
+  <li><b>Relire les sous-catégories</b> proposées d'après les règles. Une ligne « À catégoriser » n'a pas de règle : ajoutez-en une dans Règles import, ou imposez la sous-catégorie en colonne F.</li>
+  <li><b>Copier les colonnes H à L</b> (sans l'en-tête) dans Transactions, puis mettez « Oui » en Pointé.</li>
+  <li><b>Vider A à F</b> avant le relevé suivant.</li>
+ </ol></div>
+ <div class="note bad"><b>Piège fréquent</b>Ne collez jamais dans les colonnes H à M : elles contiennent des formules qui calculent le résultat. Les écraser supprime le classement automatique. Si cela arrive, annulez le collage, ou recopiez les formules d'une ligne voisine.</div>
+ <details><summary>Comment fonctionnent les règles ?</summary>
+  <p>Une règle s'applique quand son mot-clé figure dans le libellé (majuscules et minuscules sans importance). Si plusieurs conviennent, la dernière de la liste l'emporte : mettez les règles générales en haut, les précises en bas. Les opérations déjà présentes dans Transactions (même date, même montant, même compte) sont ignorées.</p>
+ </details>
+</section>
+
+<section id="routine">
+ <h2><span class="n">10</span>La routine conseillée</h2>
+ <p class="lead">Environ dix minutes par semaine et un contrôle mensuel.</p>
+ <div class="grid">
+  <div class="card"><h3>Chaque semaine</h3><ul class="l"><li>Saisir les nouvelles opérations (dépenses en négatif). Les abonnements se copient depuis <i>Ce mois-ci</i>.</li><li>Jeter un œil au solde du mois et aux catégories en alerte.</li><li>Consulter le budget du jour.</li><li>Ouvrir <i>Contrôles</i> et corriger les signalements.</li></ul></div>
+  <div class="card"><h3>Chaque mois</h3><ul class="l"><li>Importer le relevé, relire, copier dans Transactions.</li><li>Pointer les opérations vues sur le relevé.</li><li>Dans <i>Rapprochement</i>, saisir date et solde du relevé : l'écart doit être nul.</li><li>Mettre à jour capital remboursé et épargne.</li><li>Passer au mois suivant dans <i>Vue mensuelle</i>.</li><li>Provisions : après un paiement annuel, remettre « Déjà mis de côté » à zéro et décaler l'échéance.</li><li>Lire le <i>Bilan du mois</i>.</li></ul></div>
+  <div class="card"><h3>Chaque année</h3><ul class="l"><li>Changer l'année dans <i>Vue annuelle</i>, revoir les budgets.</li><li>Ouvrir <i>Clôture d'année</i> : soldes au 31/12, dettes et objectifs à reporter.</li><li>Garder une copie du fichier, puis repartir d'un exemplaire sans transactions, avec les soldes au 31/12 comme soldes initiaux.</li><li>Comparer dans <i>Année sur année</i>.</li></ul></div>
+ </div>
+</section>
+
+<section id="modifier">
+ <h2><span class="n">11</span>Modifier le classeur sans toucher à l'application</h2>
+ <p class="lead">Le tableur reste la source : l'application relit tout à chaque import.</p>
+ <div class="grid">
+  <div class="card"><span class="tag rev">Sans intervention</span><p class="muted" style="margin-top:8px">Renommer, ajouter ou supprimer des catégories et sous-catégories ; changer des budgets ; ajouter comptes, dettes, objectifs, récurrents, provisions, règles ; saisir des opérations. Réimportez : tout apparaît partout.</p></div>
+  <div class="card"><span class="tag dep">Avec intervention</span><p class="muted" style="margin-top:8px">Dépasser une capacité, renommer un onglet, déplacer des colonnes, ajouter un onglet que l'application devrait afficher. L'import ignore alors ce qu'il ne trouve pas.</p></div>
+ </div>
+ <h3>Capacités</h3>
+ <div class="tw"><table>
+  <tr><th>Élément</th><th style="text-align:right">Maximum</th></tr>
+  <tr><td>Catégories principales</td><td class="num">25</td></tr>
+  <tr><td>Sous-catégories</td><td class="num">120</td></tr>
+  <tr><td>Comptes</td><td class="num">20</td></tr>
+  <tr><td>Dettes</td><td class="num">12</td></tr>
+  <tr><td>Objectifs</td><td class="num">10</td></tr>
+  <tr><td>Récurrents</td><td class="num">40</td></tr>
+  <tr><td>Provisions</td><td class="num">20</td></tr>
+  <tr><td>Règles d'import</td><td class="num">100</td></tr>
+  <tr><td>Lignes de relevé par import</td><td class="num">300</td></tr>
+  <tr><td>Transactions</td><td class="num">≈ 5 000</td></tr>
+ </table></div>
+ <p class="muted"><span class="path">Plus › Données › Modifier mon classeur</span> rappelle ces règles et indique ce que vous avez déjà utilisé (par exemple 52 sous-catégories sur 120).</p>
+</section>
+
+<section id="faq">
+ <h2><span class="n">12</span>Bon à savoir</h2>
+ <p class="lead">Les erreurs les plus fréquentes viennent des signes, des formules écrasées et d'un double comptage.</p>
+ <details><summary>Signes et écarts</summary><p>Dans Transactions, une dépense est négative et un revenu positif. Budget et Vue annuelle affichent les dépenses en valeur absolue. Pour une dépense, un écart positif signifie que vous êtes sous le budget ; pour un revenu, qu'il dépasse l'objectif.</p></details>
+ <details><summary>La catégorie principale affiche « ? »</summary><p>La sous-catégorie saisie n'existe pas dans l'onglet Catégories. Le nom d'une sous-catégorie doit être unique.</p></details>
+ <details><summary>Une formule a été écrasée</summary><p>Ne saisissez rien dans les cellules en noir. Si une formule est écrasée, copiez-la depuis la ligne voisine.</p></details>
+ <details><summary>Crédits et abonnements : où les déclarer ?</summary><p>Les crédits uniquement dans Dettes, pas dans Récurrents, sinon le prévisionnel les compte deux fois. Les abonnements une fois dans Récurrents (planification), puis chaque prélèvement dans Transactions, seul onglet qui modifie les soldes et le budget réel.</p></details>
+ <details><summary>Récurrent signalé « absent » à tort</summary><p>Le dernier montant constaté et la présence ce mois-ci se repèrent par le libellé : celui du récurrent (par exemple « Netflix ») doit figurer dans le libellé de la transaction. Un prélèvement n'est signalé absent qu'après son jour d'échéance.</p></details>
+ <details><summary>Budget du jour</summary><p>Calculé à partir des dépenses variables du mois (type Variable dans Catégories). Les catégories de type Fixe sont considérées comme déjà réservées.</p></details>
+ <details><summary>Prévisionnel, provisions, solde cumulé</summary><p>Le prévisionnel ne projette que les récurrents et les mensualités de dettes (pas les courses ni les loisirs) ; son solde de départ est le solde actuel de tous les comptes. Les provisions ne modifient ni les soldes ni le budget réel. Le solde cumulé de la Vue annuelle additionne les flux de l'année, sans les soldes initiaux.</p></details>
+ <details><summary>Année sur année et mois restants</summary><p>Pour l'année en cours, la période comparable ne compte que les mois écoulés. L'année précédente reste à zéro tant que ses transactions ne sont pas dans le fichier. Les mois restants (Dettes, Objectifs) partent de la date du jour et diminuent d'eux-mêmes.</p></details>
+ <details><summary>Graphiques du classeur</summary><p>Les deux camemberts portent sur le mois étudié ; celui des sous-catégories montre les 14 plus grosses dépenses et regroupe le reste dans « Autres ». Le graphique de détail suit la catégorie choisie dans la case jaune.</p></details>
+ <details><summary>Compatibilité et confidentialité</summary><p>Le classeur a été vérifié dans LibreOffice ; dans un autre tableur, contrôlez les listes déroulantes et les graphiques. Il contient des données financières personnelles : conservez régulièrement une copie.</p></details>
+ <footer>Guide Mes Comptes · 22 novembre 2026</footer>
+</section>
+</div>
+</body></html>
