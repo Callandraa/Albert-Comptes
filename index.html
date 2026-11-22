@@ -523,7 +523,9 @@ function restoreAll(n){S.cfg=Object.assign(EMPTY(),n.cfg);S.months=n.months;S.em
   if(DB){queue(async()=>{await DB.doc("cfg/main").set(clone(S.cfg));for(const k of Object.keys(S.months))await DB.doc("tx/"+k).set({items:clone(S.months[k])})})}else saveLocal();route.bk=null;render()}
 async function applyImport(x){
  x.cfg.vitrine=S.cfg.vitrine;x.cfg.src={name:x.name,at:new Date().toISOString()};
- const old=Object.keys(S.months);S.cfg=x.cfg;S.months=x.months;S.empty=false;if(!DB)baseSet(snapTx());
+ const old=Object.keys(S.months);
+ const sg=t=>[t.d,t.acc,t.lbl,t.amt].join("|"),ncs=new Set(S.cfg.ncs||[]);allTx().forEach(t=>{if(t.nc)ncs.add(sg(t))});
+ S.cfg=x.cfg;S.months=x.months;S.empty=false;S.cfg.ncs=[...ncs];allTx().forEach(t=>{if(ncs.has(sg(t)))t.nc=1});if(!DB)baseSet(snapTx());
  if(DB){await queue(async()=>{await DB.doc("cfg/main").set(clone(S.cfg));for(const k of Object.keys(S.months))await DB.doc("tx/"+k).set({items:clone(S.months[k])});for(const k of old)if(!S.months[k])await DB.doc("tx/"+k).delete()})}else saveLocal();
  route.xl=null;render()}
 /* ---------- événements ---------- */
@@ -558,7 +560,7 @@ document.addEventListener("click",e=>{const z=e.target.closest("[data-zoom]");if
  if(D.cmark!==undefined){const old=baseGet(),n=chgList().length;if(!n)return;baseSet(snapTx());render();toast(n+" correction(s) marquée(s) comme reportées.",()=>{baseSet(old);render()});return}
  if(D.novit!==undefined){S.cfg.vitrine=false;saveCfg();toast("Mode saisie activé.");return}
   if(D.etx!==undefined){if(D.etx)route.etx=D.etx;else etxClose();render();scrollTo(0,0);return}
-  if(D.nc!==undefined){const t0=allTx().find(x=>x.id===D.nc);if(!t0)return;const key=[t0.d,t0.acc,t0.lbl,t0.amt].join("|"),ids=allTx().filter(x=>x.id===t0.id||[x.d,x.acc,x.lbl,x.amt].join("|")===key).map(x=>x.id),ks=new Set();ids.forEach(id=>{const k=txKey(id);ks.add(k);S.months[k].find(z=>z.id===id).nc=1});etxClose();ks.forEach(k=>saveMonth(k));toast("Signalement retiré pour cette opération.",()=>{const k2=new Set();ids.forEach(id=>{const k=txKey(id);if(k){delete S.months[k].find(z=>z.id===id).nc;k2.add(k)}});k2.forEach(k=>saveMonth(k))});return}
+  if(D.nc!==undefined){const t0=allTx().find(x=>x.id===D.nc);if(!t0)return;const key=[t0.d,t0.acc,t0.lbl,t0.amt].join("|"),ids=allTx().filter(x=>x.id===t0.id||[x.d,x.acc,x.lbl,x.amt].join("|")===key).map(x=>x.id),ks=new Set();ids.forEach(id=>{const k=txKey(id);ks.add(k);S.months[k].find(z=>z.id===id).nc=1});{const q=new Set(S.cfg.ncs||[]);q.add(key);S.cfg.ncs=[...q]}etxClose();ks.forEach(k=>saveMonth(k));saveCfg();toast("Signalement retiré pour cette opération.",()=>{S.cfg.ncs=(S.cfg.ncs||[]).filter(z=>z!==key);saveCfg();const k2=new Set();ids.forEach(id=>{const k=txKey(id);if(k){delete S.months[k].find(z=>z.id===id).nc;k2.add(k)}});k2.forEach(k=>saveMonth(k))});return}
   if(D.pcopy!==undefined||D.pcopyok!==undefined){const txt=D.pcopy!==undefined?pendTSV():pendOK();(async()=>{try{await navigator.clipboard.writeText(txt);toast("Copié. Collez dans le tableur.")}catch(x){const ta=$("pt");if(ta){ta.value=txt;ta.focus();ta.select();toast("Copie impossible : texte sélectionné, copiez-le à la main.")}}})();return}
   if(D.pmark!==undefined){const ids=pend().map(x=>x.id);if(!ids.length)return;const ks=new Set();ids.forEach(id=>{const k=txKey(id);ks.add(k);S.months[k].find(z=>z.id===id).x=1});ks.forEach(k=>saveMonth(k));toast(ids.length+" opération(s) marquée(s) comme reportées.",()=>{const k2=new Set();ids.forEach(id=>{const k=txKey(id);if(k){delete S.months[k].find(z=>z.id===id).x;k2.add(k)}});k2.forEach(k=>saveMonth(k))});return}
   if(D.undo!==undefined){const u=toast.u;toast.u=null;$("toast").hidden=true;if(u)u();return}
