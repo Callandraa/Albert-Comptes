@@ -121,11 +121,25 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const EMPTY=()=>({accounts:[],cats:[],subs:[],debts:[],goals:[],recs:[],provs:[],rules:[],recon:[],thr:0.8});
 let S={cfg:EMPTY(),months:{},empty:true},DB=null,mode="init";
 const LKEY="mescomptes-v2";
-function loadLocal(){try{const s=JSON.parse(localStorage.getItem(LKEY));if(s&&s.cfg){S.cfg=Object.assign(EMPTY(),s.cfg);S.months=s.months||{};S.empty=false}}catch(e){}}
+function loadLocal(){try{const s=JSON.parse(localStorage.getItem(LKEY));if(s&&s.cfg){S.cfg=Object.assign(EMPTY(),s.cfg);S.months=s.months||{};S.empty=false}}catch(e){}
+ try{if(S.empty===false&&localStorage.getItem("mc-base")===null)localStorage.setItem("mc-base",JSON.stringify(snapTx()))}catch(e){}}
 function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify({cfg:S.cfg,months:S.months}))}catch(e){}}
 let chain=Promise.resolve();
 function queue(fn){chain=chain.then(fn).catch(e=>toast("Enregistrement impossible : "+((e&&e.message)||e)));return chain}
 function saveCfg(){S.empty=false;if(DB)queue(()=>DB.doc("cfg/main").set(clone(S.cfg)));else saveLocal();render()}
+const BASEK="mc-base";
+const baseGet=()=>{try{return JSON.parse(localStorage.getItem(BASEK))}catch(e){return null}};
+const baseSet=b=>{try{localStorage.setItem(BASEK,JSON.stringify(b))}catch(e){}};
+const snapTx=()=>{const m={};allTx().forEach(t=>{if(!t.a)m[t.id]=[t.d,t.acc,t.sub,t.lbl||"",t.amt,t.ok?1:0]});return m};
+const CHGON=()=>mode!=="db"&&baseGet()!==null;
+const CHGL=["date","compte","sous-catégorie","libellé","montant","pointé"];
+const cfmt=(i,v)=>i===0?dfy(v):i===4?eur(v):i===5?(v?"Oui":"Non"):(v===""?"(vide)":v);
+function chgList(){if(!CHGON())return[];const b=baseGet(),cur={};allTx().forEach(t=>{if(!t.a)cur[t.id]=t});const out=[];
+ Object.keys(b).forEach(id=>{const o=b[id],t=cur[id];if(!t){out.push({id,type:"del",o});return}
+  const n=[t.d,t.acc,t.sub,t.lbl||"",t.amt,t.ok?1:0],df=[];n.forEach((v,i)=>{if(v!==o[i])df.push(i)});if(df.length)out.push({id,type:"mod",o,n,df})});
+ return out.sort((x,y)=>(x.o[0]<y.o[0]?-1:1))}
+const chgTxt=l=>{const w=o=>`${dfy(o[0])} · ${o[3]||"sans libellé"} · ${eur(o[4])} (${o[1]})`;
+ return l.map(c=>c.type==="del"?`SUPPRIMER : ${w(c.o)}`:(c.df.length===1&&c.df[0]===5?`POINTER « ${cfmt(5,c.n[5])} » : ${w(c.o)}`:`MODIFIER : ${w(c.o)}\n   → ${c.df.map(i=>`${CHGL[i]} : ${cfmt(i,c.o[i])} devient ${cfmt(i,c.n[i])}`).join(" ; ")}`)).join("\n")};
 const pend=()=>allTx().filter(t=>t.a&&!t.x);
 const pendTSV=()=>pend().map(t=>[t.d,t.acc,t.sub,String(t.lbl||"").replace(/[\t\r\n]+/g," "),String(t.amt).replace(".",",")].join("\t")).join("\n");
 const pendOK=()=>pend().map(t=>t.ok?"Oui":"Non").join("\n");
@@ -302,6 +316,7 @@ V.home=()=>{const m=route.ym,s=sums(m),p=sums(m-1),tt=totals(),vb=varBudget(m),c
  const al=[];if(ck)al.push(ck===1?`<button class="link" data-open="${checks()[0].t.id}">1 opération à vérifier</button>`:`<button class="link" data-go="more:controles">${ck} opération(s) à vérifier</button>`);if(absent)al.push(`<button class="link" data-go="${RO()?"more:controles":"add:"}">${absent} prélèvement(s) non saisi(s)</button>`);if(price)al.push(`<button class="link" data-go="more:controles">${price} montant(s) récurrent(s) différent(s)</button>`);if(rc)al.push(`<button class="link" data-go="more:rappro">Rapprochement : écart à vérifier</button>`);
  upcoming().forEach(({r,i,dd})=>{const w=dd===0?"aujourd'hui":dd===1?"demain":"dans "+dd+" j",txt=esc(r.n)+" · "+w+" · "+eur(r.amt).replace("−","");al.push(RO()?`<span>${txt}</span>`:`<button class="link" data-rec="${i}" data-cur="1">Saisir : ${txt}</button>`)});
  const over=S.cfg.cats.filter(c=>c.sens==="Dépense").filter(c=>{const b=budOfCat(c.n);return b>0&&spentIn(m,t=>prin(t.sub)===c.n)/b>S.cfg.thr}).length;if(over)al.push(`<button class="link" data-go="ana:">${over} catégorie(s) au-dessus de ${pc(S.cfg.thr)} du budget</button>`);
+ {const cq=chgList().length;if(cq)al.push(`<button class="link" data-go="more:data">${cq} correction(s) à reporter dans le tableur</button>`)}
  {const pq=pend().length;if(pq)al.push(`<button class="link" data-go="more:data">${pq} opération(s) à reporter dans le tableur</button>`)}
  if(!S.empty&&!RO())h+=`<button class="cta" data-go="add:" style="margin-bottom:10px">+ Ajouter une opération</button>`;
  if(al.length)h+=`<h2>À faire et à surveiller</h2><div class="card">${al.map(a=>`<div>${a}</div>`).join("")}</div>`;
@@ -425,7 +440,8 @@ MV.data=()=>{const dump=JSON.stringify({cfg:S.cfg,months:S.months});const xl=rou
  <div class="card"><label style="display:flex;gap:10px;align-items:flex-start;margin:0;color:var(--ink)"><input type="checkbox" id="rotog" style="width:auto;margin-top:3px" ${RO()?"checked":""}><span><b>Mode vitrine (lecture seule)</b><br><span class="muted">Le classeur est la source des données : l'application affiche sans modifier. Décochez pour saisir des opérations dans l'application ; reportez-les ensuite dans le tableur (carte « Opérations à reporter »), sinon elles seront remplacées au prochain import du classeur.</span></span></label></div>`;
 const pn=pend().length;const pdUI=(RO()&&!pn)?"":`<div class="card"><b>Opérations à reporter dans le tableur</b><div class="muted" style="margin:6px 0">${pn?pn+" opération(s) saisie(s) dans l'application ne sont pas dans votre classeur. Copiez-les, collez-les dans l'onglet Transactions (colonnes A à E, première ligne vide), puis collez la colonne Pointé (G), et enfin marquez-les comme reportées. Sinon un nouvel import les effacerait.":"Aucune opération saisie dans l'application en attente."}</div>${pn?`<textarea id="pt" readonly rows="4" style="width:100%;font-size:12px" aria-label="Opérations à reporter">${esc(pendTSV())}</textarea><button class="cta" data-pcopy="1">Copier pour Transactions (A à E)</button><button class="cta sec" data-pcopyok="1">Copier la colonne Pointé (G)</button><button class="cta sec" data-pmark="1">Marquer comme reportées</button>`:""}</div>`;
 const bd=bakDays(),bk=route.bk;const bkUI=mode==="db"?"":`<div class="card"><b>Sauvegarde</b><div class="muted" style="margin:6px 0">${bd==null?"Aucune sauvegarde enregistrée.":"Dernière sauvegarde : "+(bd===0?"aujourd'hui":"il y a "+bd+" jour"+(bd>1?"s":""))+"."} Vos données ne sont que sur ce téléphone : une sauvegarde les protège si vous videz les données de Chrome ou changez de téléphone.</div><button class="cta" data-bak="1">Enregistrer une sauvegarde</button>${typeof File==="function"&&navigator.canShare&&navigator.canShare({files:[new File(["x"],"a.json",{type:"application/json"})]})?`<button class="cta sec" data-bakshare="1">Envoyer vers Drive ou ailleurs</button>`:""}<label for="bf" style="margin-top:12px">Restaurer depuis une sauvegarde</label><input id="bf" type="file" accept=".json,application/json" aria-label="Fichier de sauvegarde">${bk?(bk.err?`<div class="msg neg" style="margin-top:10px">${esc(bk.err)}</div>`:`<div class="msg" style="margin-top:10px">${esc(bk.name)} : ${bk.n} opérations, ${bk.d.cfg.accounts.length} comptes, ${bk.d.cfg.subs.length} sous-catégories${bk.at?", sauvegardée le "+dfy(bk.at.slice(0,10)):""}.</div><button class="cta" data-applybk="1">Restaurer cette sauvegarde</button>`):""}</div>`;
-return xlUI+pdUI+bkUI+`<div class="card"><div class="muted" style="margin-bottom:8px">${mode==="db"?"Vos données sont synchronisées entre vos appareils : la même page, ouverte avec votre compte, affiche les mêmes données.":"Les données sont enregistrées sur cet appareil. Pour les retrouver ailleurs, réimportez votre classeur ou utilisez l'export ci-dessous."}</div>
+const cl=chgList();const clUI=!CHGON()?"":`<div class="card"><b>Corrections à reporter dans le tableur</b><div class="muted" style="margin:6px 0">${cl.length?cl.length+" opération(s) du classeur ont été corrigées, supprimées ou pointées dans l'application. Faites les mêmes changements dans l'onglet Transactions (retrouvez la ligne par sa date, son libellé et son montant), puis marquez-les comme reportées. Sinon un nouvel import les annulerait.":"Aucune correction en attente : le classeur et l'application disent la même chose."}</div>${cl.length?`<div style="display:grid;gap:8px;margin-bottom:10px">${cl.map(c=>`<div class="row" style="display:block"><span class="tag ${c.type==="del"?"dep":""}">${c.type==="del"?"Supprimer":c.df.length===1&&c.df[0]===5?"Pointer":"Modifier"}</span> <b>${esc(c.o[3]||"sans libellé")}</b> <span class="muted">${dfy(c.o[0])} · ${eur(c.o[4])} · ${esc(c.o[1])}</span>${c.type==="mod"?`<div class="muted" style="margin-top:2px">${c.df.map(i=>`${CHGL[i]} : ${esc(String(cfmt(i,c.o[i])))} → <b>${esc(String(cfmt(i,c.n[i])))}</b>`).join(" · ")}</div>`:""}</div>`).join("")}</div><textarea id="ct" readonly rows="3" style="width:100%;font-size:12px" aria-label="Corrections à reporter">${esc(chgTxt(cl))}</textarea><button class="cta" data-ccopy="1">Copier la liste</button><button class="cta sec" data-cmark="1">Marquer comme reportées</button>`:""}</div>`;
+return xlUI+pdUI+clUI+bkUI+`<div class="card"><div class="muted" style="margin-bottom:8px">${mode==="db"?"Vos données sont synchronisées entre vos appareils : la même page, ouverte avec votre compte, affiche les mêmes données.":"Les données sont enregistrées sur cet appareil. Pour les retrouver ailleurs, réimportez votre classeur ou utilisez l'export ci-dessous."}</div>
  <label for="exp">Export (copier)</label><textarea id="exp" readonly>${esc(dump)}</textarea><button class="cta" data-copy="1">Copier l'export</button>
  <label for="imp">Importer (coller un export)</label><textarea id="imp" placeholder="Collez ici l'export complet"></textarea><button class="cta sec" data-impdata="1">Importer et remplacer mes données</button></div>`};
 MV.import=()=>{const hasRules=S.cfg.rules.length;
@@ -493,6 +509,7 @@ function parseWorkbook(wb){
   if(us)warn.push(us+" opération(s) avec une sous-catégorie absente de l'onglet Catégories.");
   if(ua)warn.push(ua+" opération(s) avec un compte absent de l'onglet Comptes.");
   const cur=Object.values(S.months).reduce((a,m)=>a+m.length,0);if(cur>0&&n<cur*0.8)warn.push("L'application contient "+cur+" opérations, ce classeur n'en contient que "+n+".");
+  {const cq=chgList().length;if(cq)warn.unshift(cq+" correction(s) faites dans l'application ne sont pas encore reportées dans le tableur : ce remplacement les annulerait. Voir Plus > Données > Corrections à reporter.")}
   {const pq=pend().length;if(pq)warn.unshift(pq+" opération(s) saisie(s) dans l'application ne sont pas encore reportées dans le tableur : ce remplacement les effacerait. Exportez-les d'abord (Plus > Données > Opérations à reporter).")}
   return{cfg,months,n,warn}}
 const BK="mc-bak",BKS="mc-bak-snz";
@@ -506,7 +523,7 @@ function restoreAll(n){S.cfg=Object.assign(EMPTY(),n.cfg);S.months=n.months;S.em
   if(DB){queue(async()=>{await DB.doc("cfg/main").set(clone(S.cfg));for(const k of Object.keys(S.months))await DB.doc("tx/"+k).set({items:clone(S.months[k])})})}else saveLocal();route.bk=null;render()}
 async function applyImport(x){
  x.cfg.vitrine=S.cfg.vitrine;x.cfg.src={name:x.name,at:new Date().toISOString()};
- const old=Object.keys(S.months);S.cfg=x.cfg;S.months=x.months;S.empty=false;
+ const old=Object.keys(S.months);S.cfg=x.cfg;S.months=x.months;S.empty=false;if(!DB)baseSet(snapTx());
  if(DB){await queue(async()=>{await DB.doc("cfg/main").set(clone(S.cfg));for(const k of Object.keys(S.months))await DB.doc("tx/"+k).set({items:clone(S.months[k])});for(const k of old)if(!S.months[k])await DB.doc("tx/"+k).delete()})}else saveLocal();
  route.xl=null;render()}
 /* ---------- événements ---------- */
@@ -537,6 +554,8 @@ document.addEventListener("click",e=>{const z=e.target.closest("[data-zoom]");if
  if(D.rec!==undefined){const r=S.cfg.recs[+D.rec],m=t.dataset.cur?CUR:route.ym,d=dOf(m,Math.min(+r.next.slice(8,10)||1,28)),k=kOf(m),nid=uid();(S.months[k]=S.months[k]||[]).push({a:1,id:nid,d,acc:r.acc,sub:r.sub,lbl:r.n,amt:(r.sens==="Revenu"?1:-1)*r.amt,ok:false});saveMonth(k);vib();toast("✓ Opération saisie.",undoAdd(k,nid));return}
  if(D.applyxl){const x=route.xl;if(!x||x.err)return;if(!t.dataset.sure){t.textContent="Confirmer : remplacer toutes les données ?";t.dataset.sure=1;return}
   t.disabled=true;applyImport(x).then(()=>toast("Classeur importé.")).catch(()=>toast("Import impossible."));return}
+ if(D.ccopy!==undefined){const txt=chgTxt(chgList());(async()=>{try{await navigator.clipboard.writeText(txt);toast("Liste copiée.")}catch(x){const ta=$("ct");if(ta){ta.focus();ta.select();toast("Copie impossible : texte sélectionné, copiez-le à la main.")}}})();return}
+ if(D.cmark!==undefined){const old=baseGet(),n=chgList().length;if(!n)return;baseSet(snapTx());render();toast(n+" correction(s) marquée(s) comme reportées.",()=>{baseSet(old);render()});return}
  if(D.novit!==undefined){S.cfg.vitrine=false;saveCfg();toast("Mode saisie activé.");return}
   if(D.etx!==undefined){if(D.etx)route.etx=D.etx;else etxClose();render();scrollTo(0,0);return}
   if(D.nc!==undefined){const t0=allTx().find(x=>x.id===D.nc);if(!t0)return;const key=[t0.d,t0.acc,t0.lbl,t0.amt].join("|"),ids=allTx().filter(x=>x.id===t0.id||[x.d,x.acc,x.lbl,x.amt].join("|")===key).map(x=>x.id),ks=new Set();ids.forEach(id=>{const k=txKey(id);ks.add(k);S.months[k].find(z=>z.id===id).nc=1});etxClose();ks.forEach(k=>saveMonth(k));toast("Signalement retiré pour cette opération.",()=>{const k2=new Set();ids.forEach(id=>{const k=txKey(id);if(k){delete S.months[k].find(z=>z.id===id).nc;k2.add(k)}});k2.forEach(k=>saveMonth(k))});return}
