@@ -239,13 +239,18 @@ footer{margin-top:34px;color:var(--muted);font-size:13px;text-align:center}
   <div class="card"><h3>Annuler</h3><p class="muted">Après un enregistrement, une suppression ou un pointage, un bouton « Annuler » reste affiché 6 secondes. La suppression n'a plus d'étape de confirmation.</p></div>
   <div class="card"><h3>Glisser</h3><p class="muted">Dans la Liste, glisser une opération vers la droite la pointe, vers la gauche la supprime (avec Annuler).</p></div>
   <div class="card"><h3>Modifier</h3><p class="muted">Touchez une ligne pour ouvrir son formulaire : type, montant, sous-catégorie, libellé, compte, date, pointage.</p></div>
+  <div class="card"><h3>Choisir une période</h3><p class="muted">L'icône calendrier, à droite des flèches du mois, ouvre une fenêtre à trois onglets. <b>Mois</b> : l'année puis les 12 mois (un point signale ceux qui contiennent des opérations). <b>Année</b> : ouvre l'analyse annuelle, ou la liste de toute l'année si vous êtes dans Liste. <b>Période</b> : deux dates (ou un raccourci : ce mois, 3 derniers mois, cette année, 12 derniers mois), puis le bouton Liste, Budget ou Graphiques. « Aujourd'hui » ramène au mois en cours.</p></div>
   <div class="card"><h3>Filtres</h3><p class="muted">Période (mois, année, tout), compte, catégorie, type, pointage, montant minimum, avec le nombre d'opérations et les totaux.</p></div>
+  <div class="card"><h3>Exclure des calculs</h3><p class="muted">Dans le formulaire d'une opération, « Exclure des calculs » la retire des soldes, budgets, graphiques et bilans de l'application. Elle reste dans la liste, grisée. Le choix est conservé après un réimport, mais le tableur continue de la compter.</p></div>
   <div class="card"><h3>Prélèvements du jour</h3><p class="muted">Sur l'accueil, les prélèvements récurrents des 7 prochains jours se saisissent d'un toucher.</p></div>
  </div>
  <div class="note warn"><b>Une opération venue du classeur</b>Si vous la corrigez dans l'application, corrigez-la aussi dans le tableur, sinon elle reviendra comme avant au prochain import.</div>
 
  <h3>Les graphiques détaillés</h3>
  <p>Dans <span class="path">Analyse › Graphiques</span>, touchez un graphique pour l'ouvrir en version complète. Les camemberts listent toutes les catégories (puis, en touchant une catégorie, ses sous-catégories), classées par montant, avec le pourcentage et le budget utilisé. Les courbes s'accompagnent d'un tableau mois par mois (taux d'épargne, moyenne).</p>
+ <h3>Budget et graphiques sur une période libre</h3>
+ <p>Avec une période (onglet Période du calendrier), <span class="path">Analyse › Budget</span> et <span class="path">Graphiques</span> portent sur les dates choisies, annoncées dans un encadré « Période libre ». Pour revenir au mois, touchez « Revenir au mois » ou une flèche du mois.</p>
+ <ul class="l"><li><b>Budget :</b> chaque budget mensuel est multiplié par la durée de la période (jours ÷ 30,4), et la comparaison se fait avec la période précédente de même longueur au lieu de la moyenne des 3 mois.</li><li><b>Graphiques :</b> camemberts sur la période ; barres et courbe mois par mois (24 mois au maximum), les mois d'extrémité étant comptés sur les seules dates choisies. Les vues détaillées suivent la même période.</li><li><b>Année et Prévision :</b> inchangés.</li></ul>
  <h3>La comparaison à votre moyenne</h3>
  <p>Dans <span class="path">Analyse › Budget</span>, chaque catégorie indique l'écart avec la moyenne de vos 3 mois précédents.</p>
  <div class="sig"><span class="pill g">Dans votre moyenne : entre −15 % et +15 %</span><span class="pill r">Rouge : dépense en hausse ou revenu en baisse</span><span class="pill g">Vert : le contraire</span></div>
