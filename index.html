@@ -216,6 +216,7 @@ html[data-sea] body{background:radial-gradient(90% 45% at 100% 0%,color-mix(in s
 :root{--ld:0%}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ld:12%}}:root[data-theme="dark"]{--ld:12%}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
 .ccs{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 12px}.ccs button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}.ccs button[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--surface) inset}.ccs button.auto{width:auto;border-radius:999px;padding:0 12px;background:var(--chip);color:var(--ink);font:inherit;font-size:13px}
+.ccs .brk{flex-basis:100%;height:0}
 </style>
 <script src="xlsx.full.min.js"></script>
 <div class="app">
@@ -362,8 +363,8 @@ function forecast(){const start=CUR+1;let bal=totals().b;const rows=[];
   bal+=inc-out;rows.push({m,inc,out,net:inc-out,bal})}
  return rows}
 /* ---------- graphiques SVG ---------- */
-const HUES=[165,190,215,35,260,320,145,48,5,285,22,345,95,235,125,205,300,60];const hueOf=i=>HUES[i%HUES.length]+(i>=HUES.length?10:0);const hs=(h,s,l)=>`hsl(${h} ${s}% calc(${l}% + var(--ld,0%)))`;const catHue=i=>{const c=S.cfg.cats[i],o=c&&S.cfg.fun&&S.cfg.fun.cc&&S.cfg.fun.cc[c.n];return o!=null?o:hueOf(i)};const COL=i=>hs(catHue(i),58,44);
-const SC=sub=>{const so=subOf(sub);if(!so)return COL(6);const ci=Math.max(0,S.cfg.cats.findIndex(c=>c.n===so.p)),L=S.cfg.subs.filter(x=>x.p===so.p),j=Math.max(0,L.findIndex(x=>x.n===sub)),t=L.length>1?j/(L.length-1):.5;return hs(catHue(ci),Math.round(72-t*28),Math.round(28+t*40))};
+const HUES=[165,190,215,35,260,320,145,48,5,285,22,345,95,235,125,205,300,60];const hueOf=i=>HUES[i%HUES.length]+(i>=HUES.length?10:0);const hs=(h,s,l)=>`hsl(${h} ${s}% calc(${l}% + var(--ld,0%)))`;const catSpec=i=>{const c=S.cfg.cats[i],o=c&&S.cfg.fun&&S.cfg.fun.cc&&S.cfg.fun.cc[c.n];if(o==null)return{h:hueOf(i),k:1,raw:null};if(o==="g")return{h:210,k:.14,raw:o};if(typeof o==="string")return{h:+o.slice(1),k:.5,raw:o};return{h:o,k:1,raw:o}};const catHue=i=>catSpec(i).h;const COL=i=>{const q=catSpec(i);return hs(q.h,Math.round(58*q.k),44)};
+const SC=sub=>{const so=subOf(sub);if(!so)return COL(6);const ci=Math.max(0,S.cfg.cats.findIndex(c=>c.n===so.p)),L=S.cfg.subs.filter(x=>x.p===so.p),j=Math.max(0,L.findIndex(x=>x.n===sub)),t=L.length>1?j/(L.length-1):.5;const q=catSpec(ci);return hs(q.h,Math.round((72-t*28)*q.k),Math.round(28+t*40))};
 const nameCol=(l,i)=>{const k=S.cfg.cats.findIndex(c=>c.n===l);if(k>=0)return COL(k);if(subOf(l))return SC(l);return l==="Autres"?"var(--muted)":COL(i||0)};
 function pie(items,sz){sz=sz||140;const tot=items.reduce((s,x)=>s+x.v,0);if(tot<=0)return'<div class="muted">Aucune dépense sur cette période.</div>';
  let a=-Math.PI/2,p="";const R=80,C=100;
@@ -733,7 +734,7 @@ document.addEventListener("click",e=>{const z=e.target.closest("[data-zoom]");if
  if(D.opt!==undefined){try{localStorage.setItem("mc-"+D.opt,OPT(D.opt)?"0":"1")}catch(e){}seaApply();render();return}
  if(D.ay!==undefined){route.ay=(route.ay||Math.floor(route.ym/12))+(+D.ay);render();return}
  if(D.eu!==undefined){route.eu=route.eu===+D.eu?null:+D.eu;render();return}
- if(D.cc!==undefined){const[i,h]=D.cc.split(":"),c=S.cfg.cats[+i];if(!c)return;const f=FUNK();f.cc=f.cc||{};if(h==="auto")delete f.cc[c.n];else f.cc[c.n]=+h;route.ccOpen=+i;saveCfg();return}
+ if(D.cc!==undefined){const[i,h]=D.cc.split(":"),c=S.cfg.cats[+i];if(!c)return;const f=FUNK();f.cc=f.cc||{};if(h==="auto")delete f.cc[c.n];else f.cc[c.n]=h==='g'||h[0]==='s'?h:+h;route.ccOpen=+i;saveCfg();return}
  if(D.hx!==undefined){const k=txKey(D.hx);if(!k)return;const t0=S.months[k].find(z=>z.id===D.hx),was=!!t0.hx,sg=sgn(t0),h0=[...(S.cfg.hid||[])];if(was){delete t0.hx;S.cfg.hid=h0.filter(z=>z!==sg)}else{t0.hx=1;S.cfg.hid=h0.concat(sg)}saveMonth(k);saveCfg();toast(was?"Opération incluse de nouveau dans les calculs.":"Opération exclue des calculs.",()=>{if(was)t0.hx=1;else delete t0.hx;S.cfg.hid=h0;saveMonth(k);saveCfg()});return}
  if(D.ccopy!==undefined){const txt=chgTxt(chgList());(async()=>{try{await navigator.clipboard.writeText(txt);toast("Liste copiée.")}catch(x){const ta=$("ct");if(ta){ta.focus();ta.select();toast("Copie impossible : texte sélectionné, copiez-le à la main.")}}})();return}
  if(D.cmark!==undefined){const old=baseGet(),n=chgList().length;if(!n)return;baseSet(snapTx());render();toast(n+" correction(s) marquée(s) comme reportées.",()=>{baseSet(old);render()});return}
@@ -953,7 +954,7 @@ MENU.splice(MENU.findIndex(m=>m[0]==="goals")+1,0,["defis","Défis et badges","R
 {const r0=render;render=function(){const r=r0.apply(this,arguments);try{funPost()}catch(e){console.error(e)}return r}}
 /* couleurs au choix */
 const CCH=[5,22,35,48,75,95,125,145,165,190,205,215,235,260,285,300,320,345];
-const colorCard=()=>`<h2>Couleurs des catégories</h2><div class="card"><div class="muted" style="margin-bottom:6px">Choisissez la couleur de chaque catégorie : ses sous-catégories en prennent des nuances. « Auto » rend le choix à l'application.</div>`+S.cfg.cats.map((c,i)=>{const h=catHue(i),cur=S.cfg.fun&&S.cfg.fun.cc&&S.cfg.fun.cc[c.n]!=null;return`<details${route.ccOpen===i?" open":""}><summary><div class="row" style="border:0;padding:6px 0"><span><i class="dot" style="background:${COL(i)}"></i>${esc(c.n)}</span><span>${S.cfg.subs.filter(s=>s.p===c.n).map(s=>`<i class="dot" style="background:${SC(s.n)};margin:0 0 0 3px"></i>`).join("")}</span></div></summary><div class="ccs">${CCH.map(x=>`<button data-cc="${i}:${x}" aria-label="Teinte ${x}" aria-pressed="${cur&&h===x}" style="background:${hs(x,58,44)}"></button>`).join("")}<button class="auto" data-cc="${i}:auto" aria-pressed="${!cur}">Auto</button></div></details>`}).join("")+`</div>`;
+const colorCard=()=>`<h2>Couleurs des catégories</h2><div class="card"><div class="muted" style="margin-bottom:6px">Choisissez la couleur de chaque catégorie : ses sous-catégories en prennent des nuances. « Auto » rend le choix à l'application.</div>`+S.cfg.cats.map((c,i)=>{const q=catSpec(i),raw=q.raw,cur=raw!=null;return`<details${route.ccOpen===i?" open":""}><summary><div class="row" style="border:0;padding:6px 0"><span><i class="dot" style="background:${COL(i)}"></i>${esc(c.n)}</span><span>${S.cfg.subs.filter(s=>s.p===c.n).map(s=>`<i class="dot" style="background:${SC(s.n)};margin:0 0 0 3px"></i>`).join("")}</span></div></summary><div class="ccs">${CCH.map(x=>`<button data-cc="${i}:${x}" aria-label="Teinte ${x}" aria-pressed="${raw===x}" style="background:${hs(x,58,44)}"></button>`).join("")}<span class="brk"></span>${CCH.map(x=>`<button data-cc="${i}:s${x}" aria-label="Teinte douce ${x}" aria-pressed="${raw==="s"+x}" style="background:${hs(x,29,44)}"></button>`).join("")}<button data-cc="${i}:g" aria-label="Gris" aria-pressed="${raw==="g"}" style="background:${hs(210,8,44)}"></button><button class="auto" data-cc="${i}:auto" aria-pressed="${!cur}">Auto</button></div></details>`}).join("")+`</div>`;
 {const mc0=MV.cats;MV.cats=()=>colorCard()+mc0()}
 
 seaApply();
