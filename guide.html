@@ -102,7 +102,7 @@ footer{margin-top:34px;color:var(--muted);font-size:13px;text-align:center}
  <div class="k">Guide d'utilisation</div>
  <h1>Mes Comptes</h1>
  <p>Le classeur de suivi de comptes et l'application qui l'accompagne : ce que chacun fait, comment les faire travailler ensemble, et les gestes de tous les jours.</p>
- <div class="stats"><span>21 onglets</span><span>Application installable</span><span>Mise à jour : 22 novembre 2026</span></div>
+ <div class="stats"><span>21 onglets</span><span>Application installable</span><span>Mise à jour : 26 novembre 2026</span></div>
 </div></div>
 
 <nav class="toc" aria-label="Sommaire">
@@ -120,7 +120,7 @@ footer{margin-top:34px;color:var(--muted);font-size:13px;text-align:center}
  <div class="grid">
   <div class="card"><h3>Le classeur</h3><p class="muted">Vous y saisissez peu de choses : comptes, catégories, opérations. Soldes, totaux, écarts, alertes et graphiques se calculent seuls.</p></div>
   <div class="card"><h3>L'application</h3><p class="muted">Lit votre classeur pour l'afficher confortablement. Elle sait aussi enregistrer des opérations, que vous reportez ensuite dans le classeur.</p></div>
-  <div class="card"><h3>La règle d'or</h3><p class="muted">Le classeur gagne toujours. Réimporter le classeur remplace ce que contient l'application : reportez vos saisies d'abord.</p></div>
+  <div class="card"><h3>La règle d'or</h3><p class="muted">Le classeur gagne toujours. Réimporter le classeur remplace ce que contient l'application : reportez vos saisies d'abord. La fusion (section 8) fait exception : elle ajoute sans rien écraser.</p></div>
  </div>
 </section>
 
@@ -254,7 +254,7 @@ footer{margin-top:34px;color:var(--muted);font-size:13px;text-align:center}
  <h3>La comparaison à votre moyenne</h3>
  <p>Dans <span class="path">Analyse › Budget</span>, chaque catégorie indique l'écart avec la moyenne de vos 3 mois précédents.</p>
  <div class="sig"><span class="pill g">Dans votre moyenne : entre −15 % et +15 %</span><span class="pill r">Rouge : dépense en hausse ou revenu en baisse</span><span class="pill g">Vert : le contraire</span></div>
- <p class="muted" style="margin-top:8px">Pour le mois en cours, la moyenne s'arrête au même jour du mois (le 21, on compare les 21 premiers jours). Cette comparaison n'existe que dans l'application.</p>
+ <p class="muted" style="margin-top:8px">Pour le mois en cours, la moyenne s'arrête au même jour du mois (le 21, on compare les 21 premiers jours). Cette comparaison n'existe que dans l'application. Pour des moyennes sur 3, 6 et 12 mois par catégorie, voir « Moyennes par poste » dans Les petits plus.</p>
 </section>
 
 <section id="verifier">
@@ -297,6 +297,8 @@ footer{margin-top:34px;color:var(--muted);font-size:13px;text-align:center}
  <p class="lead">Dans l'application installée, les données ne sont que dans Chrome : vider les données du navigateur ou changer de téléphone les efface.</p>
  <div class="grid">
   <div class="card"><h3>Sauvegarde</h3><p class="muted">Dans <span class="path">Plus › Données</span> : « Enregistrer une sauvegarde » crée un fichier dans les téléchargements ; « Envoyer vers Drive ou ailleurs » le place directement dans Drive. Pour restaurer : « Restaurer depuis une sauvegarde », puis confirmez. L'accueil rappelle de sauvegarder après 30 jours.</p></div>
+  <div class="card"><h3>Export vers Excel</h3><p class="muted"><span class="path">Plus › Données › Exporter vers Excel</span> crée un classeur .xlsx avec toutes vos opérations (colonne ID à ne pas modifier) et vos comptes, catégories, budgets, récurrents, dettes, objectifs… à la même disposition que votre suivi. Ce n'est pas votre classeur complet : pas de formules ni de tableaux de bord.</p></div>
+  <div class="card"><h3>Fusionner un classeur</h3><p class="muted"><span class="path">Plus › Données › Fusionner un classeur</span> : choisissez un export (ou votre suivi .ods / .xlsx) où vous avez saisi ou corrigé des opérations sur le PC. Un aperçu liste les opérations identiques, nouvelles, modifiées et les lignes à vérifier ; vous cochez ce que vous gardez. Rien n'est supprimé, une copie de sécurité est faite avant, et « Annuler la fusion » restaure l'état précédent. Les lignes avec un compte ou une catégorie inconnus ne sont pas cochées par défaut.</p></div>
   <div class="card"><h3>Export (copier)</h3><p class="muted">Copie complète de l'application sous forme de texte : réglages et toutes les opérations. Utile pour passer sur un autre appareil : collez-le dans « Importer (coller un export) ». Ce texte ne s'ouvre pas dans le tableur.</p></div>
  </div>
  <div class="note"><b>Ne pas confondre</b>L'export complet transporte l'application. Le report (section 7) met à jour le tableur. Le classeur .ods reste la source principale : en cas de perte, un réimport remet tout en place, sauf les saisies faites seulement dans l'application.</div>
@@ -361,10 +363,14 @@ footer{margin-top:34px;color:var(--muted);font-size:13px;text-align:center}
   <div class="card"><h3>Défis du mois</h3><p class="muted">Choisissez dans une liste : plafond sur une catégorie, jours sans dépense, épargne minimale. La progression s'affiche sur l'accueil. Un défi réussi compte pour un badge.</p></div>
   <div class="card"><h3>Objectifs vivants</h3><p class="muted">Plus > Objectifs : barre animée, paliers, messages d'encouragement et bouton « Verser ». Le versement est enregistré dans l'application ; reportez le nouveau montant dans la feuille Objectifs du classeur, sinon l'import le remplacera.</p></div>
   <div class="card"><h3>Bilan de l'année</h3><p class="muted">Plus > Bilan de l'année : des cartes à faire défiler (plus grosse dépense, mois le plus calme, catégorie préférée, jour le plus dépensier, habitudes).</p></div>
+  <div class="card"><h3>Wrapped, mois et année</h3><p class="muted">Plus › Bilans › Wrapped : votre mois ou votre année racontés en diapos plein écran (total dépensé et comparaison, postes préférés, plus grosse dépense, jour dépensier, jours sans dépense, mis de côté…). Touchez à droite pour avancer, à gauche pour revenir ; les diapos défilent aussi seules, un appui long met en pause. Un bouton « Voir en Wrapped » est aussi dans le Bilan du mois et le Bilan de l'année.</p></div>
+  <div class="card"><h3>Bilan du mois en blocs</h3><p class="muted">Plus › Bilan du mois : chaque rubrique est un bloc coloré avec son chiffre clé (solde, évolution, budget consommé, poste principal…). « Points forts » en vert, « À surveiller » en rouge.</p></div>
+  <div class="card"><h3>Moyennes par poste</h3><p class="muted">Plus › Bilans › Moyennes : pour chaque catégorie (touchez-la pour voir ses sous-catégories), la moyenne mensuelle sur 3, 6 et 12 mois, à côté du mois affiché. Le mois est vert s'il est nettement sous la moyenne, rouge s'il est nettement au-dessus. Bouton Dépenses / Revenus. Si l'historique est plus court que la fenêtre, la moyenne porte sur les mois disponibles.</p></div>
+  <div class="card"><h3>Graphique au choix</h3><p class="muted">Analyse › Graphiques, en haut : choisissez la mesure (dépenses, revenus, solde, solde cumulé), la période (affichée, 3, 6, 12 mois, année, tout), le regroupement (jour, semaine, mois), barres ou courbe, une catégorie ou une sous-catégorie, et comparez à la période précédente en pointillés. Touchez le graphique pour lire une valeur. Les réglages ne sont pas mémorisés.</p></div>
   <div class="card"><h3>Patrimoine net</h3><p class="muted">Plus > Patrimoine : courbe mois par mois (comptes moins dettes) avec points haut et bas. Le passé des dettes est estimé à partir des mensualités.</p></div>
   <div class="card"><h3>Où va mon euro ?</h3><p class="muted">Plus > Où va mon euro ? : 100 pièces réparties par catégorie pour le mois affiché. Touchez une catégorie pour la mettre en avant.</p></div>
   <div class="card"><h3>Saisie express</h3><p class="muted">Onglet Saisie : vos 5 dépenses les plus fréquentes en un tap (même montant, compte et catégorie qu'avant, date du jour), avec Annuler. Sur l'accueil, « Saisir les prélèvements du jour » enregistre d'un coup les récurrents prévus aujourd'hui.</p></div>
-  <div class="card"><h3>Icônes, animations, ambiance</h3><p class="muted">Une couleur par catégorie (au choix dans Plus > Catégories), avec des nuances pour les sous-catégories. Icônes de catégories, chiffres et barres qui s'animent, vibrations discrètes, fond qui suit les saisons. Plus (en haut) : boutons « Fond » et « Vibrations ». Si votre téléphone réduit les animations, elles sont désactivées.</p></div>
+  <div class="card"><h3>Icônes, animations, ambiance</h3><p class="muted">Une couleur par catégorie (au choix dans Plus > Catégories), avec des nuances pour les sous-catégories. Trois palettes globales : Pastel classique, Couleurs franches et Tons naturels (Plus, et en haut de Plus > Catégories). 14 thèmes pour l'appli (Plus > Thème de l'appli). Les barres de budget restent vertes jusqu'à 80 %, puis jaunes, puis rouges au-delà de 100 %. Icônes de catégories, chiffres et barres qui s'animent, vibrations discrètes, fond qui suit les saisons. Plus (en haut) : boutons « Fond » et « Vibrations ». Si votre téléphone réduit les animations, elles sont désactivées.</p></div>
   <div class="card"><h3>Accueil personnalisable</h3><p class="muted">Accueil : raccourcis (Saisir, Pointer, Import, Rappro.), graphique des dépenses jour par jour, les 3 plus gros postes, « À venir ce mois-ci » (récurrents restant à passer, avec le total à prévoir) et les 5 dernières opérations. Plus > Personnaliser l'accueil : réordonner ou masquer chaque carte, et ajouter un raccourci dans la barre du bas.</p></div>
   <div class="card"><h3>Menu Plus mieux rangé</h3><p class="muted">Les écrans sont regroupés (Suivi, Projets, Bilans, Gestion). La barre de recherche trouve un écran ou une opération. L'étoile d'une entrée l'épingle dans « Favoris ». Le bouton « + » flottant permet de saisir de n'importe où (désactivable dans Plus > Ambiance).</p></div>
  </div>
@@ -383,7 +389,7 @@ footer{margin-top:34px;color:var(--muted);font-size:13px;text-align:center}
  <details><summary>Année sur année et mois restants</summary><p>Pour l'année en cours, la période comparable ne compte que les mois écoulés. L'année précédente reste à zéro tant que ses transactions ne sont pas dans le fichier. Les mois restants (Dettes, Objectifs) partent de la date du jour et diminuent d'eux-mêmes.</p></details>
  <details><summary>Graphiques du classeur</summary><p>Les deux camemberts portent sur le mois étudié ; celui des sous-catégories montre les 14 plus grosses dépenses et regroupe le reste dans « Autres ». Le graphique de détail suit la catégorie choisie dans la case jaune.</p></details>
  <details><summary>Compatibilité et confidentialité</summary><p>Le classeur a été vérifié dans LibreOffice ; dans un autre tableur, contrôlez les listes déroulantes et les graphiques. Il contient des données financières personnelles : conservez régulièrement une copie.</p></details>
- <footer>Guide Mes Comptes · 22 novembre 2026</footer>
+ <footer>Guide Mes Comptes · 26 novembre 2026</footer>
 </section>
 </div>
 </body></html>
